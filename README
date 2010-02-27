@@ -1,0 +1,34 @@
+NAME
+    Plack::Middleware::Hippie - Plack helpers or the long hair, or comet
+
+SYNOPSIS
+      builder {
+        enable "Hippie", root => '/_hippie',
+            init => sub { my ($arg, $handle) = @_;
+                          # ...
+                        },
+            on_error => sub { my $arg = shift;
+                              # ...
+                        },
+            on_message => sub { my ($arg, $msg) = @_;
+
+                        },
+
+        $app;
+      };
+
+DESCRIPTION
+    Plack::Middleware::Hippie provides unified bidirectional communication
+    over HTTP via websocket or xmhr.
+
+SEE ALSO
+    hippie.js
+
+AUTHOR
+    Chia-liang Kao <clkao@clkao.org>
+
+LICENSE
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+SEE ALSO
