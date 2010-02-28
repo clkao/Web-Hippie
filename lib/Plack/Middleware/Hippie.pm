@@ -96,7 +96,7 @@ sub handler_ws {
         use Plack::Middleware::Hippie::WebSocket;
         my $handle = Plack::Middleware::Hippie::WebSocket->new( id => $client_id,
                                                             h => $h);
-        $h->on_error( sub { $self->on_error->($arg, $h); undef $h } );
+        $h->on_error( sub { $self->on_error->($arg, $handle); undef $handle } );
 
         $h->push_write($hs);
 
