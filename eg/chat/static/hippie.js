@@ -28,6 +28,10 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
         var that = this;
         this.init = function() {
             var s = new DUI.Stream();
+            // XXX: somehow s.listeners are shared between objects.
+            // maybe a DUI class issue?  this workarounds issue where
+            // reconnect introduces duplicated listeners.
+            s.listeners = {};
             s.listen('application/json', function(payload) {
                 var event = eval('(' + payload + ')');
                 that.on_event(event);
