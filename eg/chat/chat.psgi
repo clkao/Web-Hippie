@@ -41,25 +41,37 @@ my $app = sub {
 my $bus = AnyMQ->new;
 builder {
     enable "Static", path => sub { s!^/static/!! }, root => 'static';
-    enable "Hippie", root => '/_hippie',
-        init => sub {
-            my $room = shift;
-            my $h = shift;
-            my $sub = $bus->new_listener($h->id);
-            $sub->subscribe($bus->topic($room));
-            $sub->poll(sub { $h->send_msg($_[0]) });
-        },
-        on_error => sub {
-            my $room = shift;
-            # $sub->destroyed(1)
-        },
-        on_message => sub {
-            my $room = shift;
-            my $msg = shift;
-#            $msg->{address} = $req->address;
-            $msg->{time} = time;
-            $bus->topic($room)->publish($msg);
-        }
-        ;
+    enable "Hippie",
+        root => '/_hippie',
+        handler => sub {
+            my $env = shift;
+            my $room = $env->{'hippie.args'};
+            my $topic = $bus->topic($room);
+
+            if ($env->{PATH_INFO} eq '/message') {
+                my $msg = $env->{'hippie.message'};
+                $msg->{time} = time;
+                $msg->{address} = $env->{REMOTE_ADDR};
+                $topic->publish($msg);
+            }
+            else {
+                my $h = $env->{'hippie.handle'}
+                    or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
+
+                if ($env->{PATH_INFO} eq '/init') {
+                    my $sub = $bus->new_listener($h->id);
+                    $sub->subscribe( $topic );
+                    $sub->poll(sub { $h->send_msg($_[0]) });
+                }
+                elsif ($env->{PATH_INFO} eq '/error') {
+                    warn "==> disconnecting $env->{'hippie.handle'}";
+                }
+                else {
+                    die "unknown hippie message";
+                }
+            }
+            return [ '200', [ 'Content-Type' => 'text/plain' ], [ "" ] ]
+        };
+
     $app;
 };

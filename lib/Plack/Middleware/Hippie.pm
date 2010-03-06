@@ -5,7 +5,7 @@ use 5.008_001;
 our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
-use Plack::Util::Accessor qw( root init on_error on_message );
+use Plack::Util::Accessor qw( root init on_error on_message handler );
 
 sub call {
     my ($self, $env) = @_;
@@ -22,19 +22,49 @@ sub call {
     unless ($code) {
         return $self->app->($env);
     }
-    return $code->($self, $env, $arg);
+
+    $env->{'hippie.args'} = $arg;
+
+    return $code->($self, $env, $self->handler || $self->compat_handler);
+}
+
+sub compat_handler {
+    my $self = shift;
+    return sub {
+        my $env = shift;
+        my $arg = $env->{'hippie.args'};
+        if ($env->{PATH_INFO} eq '/message') {
+            $self->on_message->($arg, $env->{'hippie.message'});
+        }
+        else {
+            my $h = $env->{'hippie.handle'}
+                or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
+
+            if ($env->{PATH_INFO} eq '/init') {
+                $self->init->($arg, $h);
+            }
+            elsif ($env->{PATH_INFO} eq '/error') { 
+                $self->on_error->($arg, $h);
+            }
+            else {
+                die "unknown hippie message";
+            }
+        }
+        return [ '200', [ 'Content-Type' => 'text/plain' ], [ "" ] ]
+    };
 }
 
 sub handler_pub {
-    my ($self, $env, $arg) = @_;
+    my ($self, $env, $handler) = @_;
     my $req = Plack::Request->new($env);
-    $self->on_message->($arg, $req->parameters->mixed);
-    my $res = $req->new_response(200);
-    $res->finalize;
+    $env->{'hippie.message'} = $req->parameters->mixed;
+    $env->{'PATH_INFO'} = '/message';
+
+    $handler->($env);
 }
 
 sub handler_mxhr {
-    my ($self, $env, $arg) = @_;
+    my ($self, $env, $handler) = @_;
     my $req = Plack::Request->new($env);
     my $client_id = $req->param('client_id') || rand(1);
 
@@ -48,18 +78,16 @@ sub handler_mxhr {
     return sub {
         my $writer = $_[0]->([ 200, [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"']]);
         $writer->write("--" . $boundary. "\n");
-        my $handle = Plack::Middleware::Hippie::MXHR->new( id => $client_id,
-                                                           boundary => $boundary,
-                                                           writer => $writer );
-        $self->init->($arg, $handle);
-
+        $env->{'hippie.handle'} = Plack::Middleware::Hippie::MXHR->new( id => $client_id,
+                                                                        boundary => $boundary,
+                                                                        writer => $writer );
+        $env->{'PATH_INFO'} = '/init';
+        $handler->($env);
     };
 }
 
 sub handler_ws {
-    my $self = shift;
-    my $env = shift;
-    my $arg = shift;
+    my ($self, $env, $handler) = @_;
 
     my $req = Plack::Request->new($env);
     my $res = $req->new_response(200);
@@ -94,23 +122,29 @@ sub handler_ws {
         my $h = AnyEvent::Handle->new( fh => $fh );
 
         use Plack::Middleware::Hippie::WebSocket;
-        my $handle = Plack::Middleware::Hippie::WebSocket->new( id => $client_id,
-                                                            h => $h);
-        $h->on_error( sub { $self->on_error->($arg, $handle); undef $handle } );
+        $env->{'hippie.handle'} = Plack::Middleware::Hippie::WebSocket->new( id => $client_id,
+                                                                             h => $h);
+        $h->on_error( sub {
+                          $env->{'PATH_INFO'} = '/error';
+                          $handler->($env);
+                          undef $env->{'hippie.handle'};
+                      });
 
         $h->push_write($hs);
-
-        $self->init->($arg, $handle);
 
         $h->on_read(sub {
                         shift->push_read( line => "\xff", sub {
                                               my ($h, $json) = @_;
                                               $json =~ s/^\0//;
 
-                                              my $data = JSON::decode_json($json);
-                                              $self->on_message->($arg, $data);
+                                              $env->{'hippie.message'} = JSON::decode_json($json);
+                                              $env->{'PATH_INFO'} = '/message';
+                                              $handler->($env);
                 });
             });
+
+        $env->{'PATH_INFO'} = '/init';
+        $handler->($env);
     };
 }
 
