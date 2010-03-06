@@ -5,11 +5,28 @@ use 5.008_001;
 our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
-use Plack::Util::Accessor qw( root init on_error on_message handler );
+use Plack::Util::Accessor qw( root init on_error on_message );
 
 sub call {
     my ($self, $env) = @_;
 
+    if ($self->root) {
+        warn "deprecated usage";
+        return $self->compat_call($env);
+    }
+
+    my (undef, $type, $arg) = split('/', $env->{PATH_INFO}, 3);
+
+    my $code = $self->can("handler_$type")
+        or return [ '404', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
+
+    $env->{'hippie.args'} = $arg;
+
+    return $code->($self, $env, $self->app);
+
+}
+sub compat_call {
+    my ($self, $env) = @_;
     my $path_match = $self->root or return;
     my $path = $env->{PATH_INFO};
 
@@ -25,7 +42,7 @@ sub call {
 
     $env->{'hippie.args'} = $arg;
 
-    return $code->($self, $env, $self->handler || $self->compat_handler);
+    return $code->($self, $env, $self->compat_handler);
 }
 
 sub compat_handler {
@@ -164,18 +181,14 @@ Plack::Middleware::Hippie - Plack helpers or the long hair, or comet
   use Plack::Builder;
 
   builder {
-    enable "Hippie", root => '/_hippie',
-        init => sub { my ($arg, $handle) = @_;
-                      # ...
-                    },
-        on_error => sub { my $arg = shift;
-                          # ...
-                    },
-        on_message => sub { my ($arg, $msg) = @_;
-
-                    },
-
-    $app;
+    mount '/_hippie' => builder {
+      enable "Hippie";
+      sub { my $env = shift;
+            my $args = $env->{'hippie.args'};
+            my $handle = $env->{'hippie.handle'};
+            # Your handler based on PATH_INFO: /init, /error, /message
+    };
+    mount '/' => $app;
   };
 
 =head1 DESCRIPTION

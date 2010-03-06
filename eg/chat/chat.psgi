@@ -40,10 +40,9 @@ my $app = sub {
 
 my $bus = AnyMQ->new;
 builder {
-    enable "Static", path => sub { s!^/static/!! }, root => 'static';
-    enable "Hippie",
-        root => '/_hippie',
-        handler => sub {
+    mount '/_hippie' => builder {
+        enable "Hippie";
+        sub {
             my $env = shift;
             my $room = $env->{'hippie.args'};
             my $topic = $bus->topic($room);
@@ -72,6 +71,9 @@ builder {
             }
             return [ '200', [ 'Content-Type' => 'text/plain' ], [ "" ] ]
         };
-
-    $app;
+    };
+    mount '/' => builder {
+        enable "Static", path => sub { s!^/static/!! }, root => 'static';
+        $app;
+    };
 };
