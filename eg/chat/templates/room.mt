@@ -1,7 +1,7 @@
 ? my ($host, $room) = @_
 <html>
 <head>
-<title>Twiggy/Plack WebSocket Chat demo</title>
+<title>Hippie Chat demo</title>
 <script src="/static/jquery-1.3.2.min.js"></script>
 <script src="/static/jquery.ev.js"></script>
 <script src="/static/jquery.md5.js"></script>
@@ -30,7 +30,23 @@ function doPost(el1, el) {
 }
 
 $(function(){
+    var timer_update;
     hippie = new Hippie("<?= $host ?>", "<?= $room ?>",
+          function () {
+                $('#connection-status').addClass("connected").text("Connected");
+                if(timer_update) clearTimeout(timer_update);
+          },
+          function () {
+                var retry = new Date(new Date().getTime()+hippie.reconnect_time*1000);
+                var try_now = $('<span/>').text("Try now").click(function() { hippie.reconnect_now() });
+                var timer = $('<span/>');
+                var do_timer_update = function() {
+                    timer.text( Math.ceil((retry - new Date())/1000) + "s. " )
+                    timer_update = window.setTimeout( do_timer_update, 1000);
+                };
+                $('#connection-status').removeClass("connected").text("Server disconnected.  retry in ").append(timer).append(try_now);
+                do_timer_update();
+          },
           function (d) {
             try {
                 var src = d.avator || ("http://www.gravatar.com/avatar/" + $.md5(d.ident || 'foo'));
@@ -61,7 +77,7 @@ $(function(){
                 $('#messages').prepend($('<tr/>').addClass('message').append(avatar).append(message).append(meta));
                 
             } catch(e) { if (console) console.log(e) }
-        });
+        }, 5);
 
     if ($.cookie(cookieName))
         $('#ident').attr('value', $.cookie(cookieName));
@@ -100,6 +116,18 @@ body {
   margin: 1em 2em
 }
 
+#connection-status {
+  position: absolute;
+  top: 0px;
+  right:0px;
+  background-color: red;
+}
+
+#connection-status.connected {
+  background-color: #00ff00;
+  display: none;
+}
+
 </style>
 </head>
 <body>
@@ -113,10 +141,14 @@ Your email (for Gravatar): <input id="ident" type="text" name="ident" size="24"/
 Something to say: <input id="chat" type="text" size="48"/>
 </form>
 
+<div id="connection-status" class="disconnected">
+Connecting...
+</div>
+
 <table id="messages">
 </table>
 
-<div id="footer">Powered by <a href="http://github.com/miyagawa/Twiggy">Twiggy/<?= $Twiggy::VERSION ?></a>.</div>
+<div id="footer">Powered by <a href="http://github.com/clkao/Plack-Middleware-Hippie">Hippie/<?= $Plack::Middleware::Hippie::VERSION ?></a>.</div>
 
 </div>
 </body>
