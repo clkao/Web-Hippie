@@ -46,7 +46,13 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
         };
     }
     else {
-        throw("not yet");
+        var that = this;
+        this.init = function() {
+            $.ev.loop('/_hippie/poll/' + arg + '?client_id=' + Math.random(),
+                      { '*': that.on_event }
+                     );
+            that.on_connect();
+        }
     }
 
     this.init();
@@ -76,7 +82,7 @@ Hippie.prototype = {
         if (this.ws) {
             this.ws.send(JSON.stringify(msg));
         }
-        else if (this.mxhr) {
+        else {
             jQuery.ajax({
                 url: "/_hippie/pub/"+this.arg,
                 data: msg,

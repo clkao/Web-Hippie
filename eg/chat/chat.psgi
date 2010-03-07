@@ -39,6 +39,7 @@ my $app = sub {
 };
 
 my $bus = AnyMQ->new;
+my $client_mgr;
 builder {
     mount '/_hippie' => builder {
         enable "Hippie";
@@ -53,6 +54,23 @@ builder {
                 $msg->{address} = $env->{REMOTE_ADDR};
                 $topic->publish($msg);
             }
+            elsif ($env->{PATH_INFO} eq '/poll') {
+                # XXX: probably fatal here for not having client_id.
+                my $client_id = Plack::Request->new($env)->param('client_id') || rand(1);
+                my $sub = $client_mgr->{$client_id} ||= $bus->new_listener( $topic );
+                # XXX the recycling should be done in anymq
+                $sub = $bus->new_listener( $topic ) if $sub->destroyed;
+                return sub {
+                    my $responder = shift;
+                    my $writer = $responder->([200, [ 'Content-Type' => 'application/json']]);
+                    # XXX: callback for nuregistering clieng_mgr not yet invoked.
+                    $sub->poll_once(sub { $writer->write(JSON::encode_json(\@_));
+                                          $writer->close },
+                                    30,
+                                    sub { delete $client_mgr->{$client_id} },
+                                );
+                }
+            }
             else {
                 my $h = $env->{'hippie.handle'}
                     or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
@@ -62,7 +80,7 @@ builder {
                     $sub->poll(sub { $h->send_msg($_[0]) });
                 }
                 elsif ($env->{PATH_INFO} eq '/error') {
-                    warn "==> disconnecting $env->{'hippie.handle'}";
+                    warn "==> disconnecting $h";
                 }
                 else {
                     die "unknown hippie message";
