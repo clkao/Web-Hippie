@@ -58,8 +58,7 @@ builder {
                     or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
 
                 if ($env->{PATH_INFO} eq '/init') {
-                    my $sub = $bus->new_listener($h->id);
-                    $sub->subscribe( $topic );
+                    my $sub = $bus->new_listener( $topic );
                     $sub->poll(sub { $h->send_msg($_[0]) });
                 }
                 elsif ($env->{PATH_INFO} eq '/error') {
