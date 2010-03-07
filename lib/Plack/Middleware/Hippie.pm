@@ -17,10 +17,13 @@ sub call {
 
     my (undef, $type, $arg) = split('/', $env->{PATH_INFO}, 3);
 
-    my $code = $self->can("handler_$type")
-        or return [ '404', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
-
     $env->{'hippie.args'} = $arg;
+
+    my $code = $self->can("handler_$type");
+    unless ($code) {
+        $env->{'PATH_INFO'} = "/$type";
+        return $self->app->($env);
+    }
 
     return $code->($self, $env, $self->app);
 
@@ -35,12 +38,12 @@ sub compat_call {
         return $self->app->($env);
     }
 
+    $env->{'hippie.args'} = $arg;
+
     my $code = $self->can("handler_$type");
     unless ($code) {
         return $self->app->($env);
     }
-
-    $env->{'hippie.args'} = $arg;
 
     return $code->($self, $env, $self->compat_handler);
 }
@@ -174,7 +177,7 @@ __END__
 
 =head1 NAME
 
-Plack::Middleware::Hippie - Plack helpers or the long hair, or comet
+Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
 
 =head1 SYNOPSIS
 
