@@ -1,20 +1,18 @@
 NAME
-    Plack::Middleware::Hippie - Plack helpers or the long hair, or comet
+    Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
 
 SYNOPSIS
+      use Plack::Builder;
+
       builder {
-        enable "Hippie", root => '/_hippie',
-            init => sub { my ($arg, $handle) = @_;
-                          # ...
-                        },
-            on_error => sub { my $arg = shift;
-                              # ...
-                        },
-            on_message => sub { my ($arg, $msg) = @_;
-
-                        },
-
-        $app;
+        mount '/_hippie' => builder {
+          enable "Hippie";
+          sub { my $env = shift;
+                my $args = $env->{'hippie.args'};
+                my $handle = $env->{'hippie.handle'};
+                # Your handler based on PATH_INFO: /init, /error, /message
+        };
+        mount '/' => $app;
       };
 
 DESCRIPTION
