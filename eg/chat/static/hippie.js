@@ -9,10 +9,15 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
     if ("WebSocket" in window) {
         var that = this;
         this.init = function() {
-            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg);
+            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg + '?client_id=' + that.client_id);
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
-                that.on_event(d);
+                if (d.type == "hippie.pipe.set_client_id") {
+                    that.client_id = d.client_id;
+                }
+                else {
+                    that.on_event(d);
+                }
             }
             ws.onclose = ws.onerror = function(ev) {
                 that.on_disconnect();

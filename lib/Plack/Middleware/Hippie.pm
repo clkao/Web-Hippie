@@ -130,12 +130,13 @@ sub handler_ws {
         # and we should send HTTP/1.1 response which Twiggy
         # doesn't implement yet.
 
+        my $request_uri = $req->request_uri;
         my $hs = join "\015\012",
                 "HTTP/1.1 101 Web Socket Protocol Handshake",
                 "Upgrade: WebSocket",
                 "Connection: Upgrade",
                 "WebSocket-Origin: $env->{HTTP_ORIGIN}",
-                "WebSocket-Location: ws://$env->{HTTP_HOST}$env->{SCRIPT_NAME}$env->{PATH_INFO}",
+                "WebSocket-Location: ws://$env->{HTTP_HOST}$request_uri",
                 '', '';
 
         my $fh = $env->{'psgix.io'}
@@ -199,7 +200,7 @@ Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
 =head1 DESCRIPTION
 
 Plack::Middleware::Hippie provides unified bidirectional communication
-over HTTP via websocket or xmhr.
+over HTTP via websocket or mxhr.
 
 =head1 SEE ALSO
 

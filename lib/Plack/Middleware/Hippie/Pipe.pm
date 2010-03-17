@@ -21,9 +21,10 @@ sub call {
 
     $env->{'hippie.bus'} = $self->bus;
 
+    my $client_id = $env->{'hippie.client_id'} = Plack::Request->new($env)->param('client_id');
     if ($env->{PATH_INFO} eq '/poll') {
         my $args = $env->{'hippie.args'};
-        my $client_id = Plack::Request->new($env)->param('client_id');
+
         # redirect to poll url again with client_id
         unless ($client_id) {
             my $res = Plack::Response->new;
@@ -35,17 +36,8 @@ sub call {
             return $res->finalize;
         }
 
-        my $sub = $self->client_mgr->{$client_id};
-        my $new = !$sub || $sub->destroyed;
-        if ($new) {
-            $sub = $self->client_mgr->{$client_id} = $self->bus->new_listener();
-            # XXX the recycling should be done in anymq
-            $env->{'hippie.listener'} = $sub;
-            $env->{PATH_INFO} = '/new_listener';
-            $self->app->($env);
-            $sub->append({ type => 'hippie.pipe.set_client_id',
-                           client_id => $client_id} );
-        }
+        # now we are sure there's client_id
+        my $sub = $self->get_listener($env);
 
         return sub {
             my $responder = shift;
@@ -62,14 +54,37 @@ sub call {
         my $h = $env->{'hippie.handle'}
             or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
 
-        my $sub = $env->{'hippie.listener'} = $self->bus->new_listener();
-        $env->{PATH_INFO} = '/new_listener';
+        my $sub = $self->get_listener($env);
+        $sub->poll(sub { $h->send_msg($_) for @_ });
+    }
+    elsif ($env->{PATH_INFO} eq '/error') {
+        $env->{'hippie.listener'}->cv->cb(undef);
         $self->app->($env);
-        $sub->poll(sub { $h->send_msg($_[0]) });
     }
     else {
         return $self->app->($env);
     }
+}
+
+sub get_listener {
+    my ($self, $env) = @_;
+    my $client_id = $env->{'hippie.client_id'} ||= rand(1);
+    my $sub = $self->client_mgr->{$client_id};
+
+    my $new = !$sub || $sub->destroyed;
+    if ($new) {
+        $sub = $self->client_mgr->{$client_id} = $self->bus->new_listener();
+        $env->{'hippie.listener'} = $sub;
+        # XXX the recycling should be done in anymq
+        $env->{PATH_INFO} = '/new_listener';
+        $self->app->($env);
+        $sub->append({ type => 'hippie.pipe.set_client_id',
+                       client_id => $client_id} );
+    }
+
+    $env->{'hippie.listener'} = $sub;
+    return $sub;
+
 }
 
 1;
