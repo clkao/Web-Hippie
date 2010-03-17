@@ -6,6 +6,8 @@ our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
 use Plack::Util::Accessor qw( root init on_error on_message );
+use AnyEvent;
+use AnyEvent::Handle;
 
 sub call {
     my ($self, $env) = @_;

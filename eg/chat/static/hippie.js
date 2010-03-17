@@ -48,8 +48,13 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
     else {
         var that = this;
         this.init = function() {
-            $.ev.loop('/_hippie/poll/' + arg + '?client_id=' + Math.random(),
-                      { '*': that.on_event }
+            $.ev.loop('/_hippie/poll/' + arg,
+                      { '*': that.on_event,
+                        'hippie.pipe.set_client_id': function(e) {
+                            that.client_id = e.client_id;
+                            $.ev.url = '/_hippie/poll/' + arg + '?client_id=' + e.client_id;
+                        }
+                      }
                      );
             that.on_connect();
         }
