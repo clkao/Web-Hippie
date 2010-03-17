@@ -59,6 +59,7 @@
      */
     loop: function(url, handlers) {
       var self = this;
+      if (!self.url) self.url = url;
       if (handlers) {
         if (typeof handlers == "object") {
           this.handlers = handlers;
@@ -72,7 +73,7 @@
       this.xhr = $.ajax({
         type     : 'GET',
         dataType : 'json',
-        url      : url,
+        url      : self.url,
         timeout  : self.timeout,
         success  : function(messages, status) {
           // console.log('success', messages);
@@ -87,7 +88,7 @@
             delay = 5000;
           }
           // "recursively" loop
-          window.setTimeout(function(){ if (self.running) self.loop(url); }, delay);
+          window.setTimeout(function(){ if (self.running) self.loop(self.url); }, delay);
         }
       });
     }
