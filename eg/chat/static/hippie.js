@@ -9,7 +9,7 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
     if ("WebSocket" in window) {
         var that = this;
         this.init = function() {
-            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg + '?client_id=' + that.client_id);
+            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg + '?client_id=' + (that.client_id || ''));
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
                 if (d.type == "hippie.pipe.set_client_id") {
@@ -39,12 +39,17 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
             s.listeners = {};
             s.listen('application/json', function(payload) {
                 var event = eval('(' + payload + ')');
-                that.on_event(event);
+                if (event.type == "hippie.pipe.set_client_id") {
+                    that.client_id = event.client_id;
+                }
+                else {
+                    that.on_event(event);
+                }
             });
             s.listen('complete', function() {
                 that.on_disconnect();
             });
-            s.load("/_hippie/mxhr/"+arg);
+            s.load("/_hippie/mxhr/" + arg + '?client_id=' + (that.client_id || ''));
             that.on_connect();
             that.reconnect_time = reconnect_time; // XXX: this is not really correct, need onready hook from xmhr.
             that.mxhr = s;

@@ -98,12 +98,24 @@ sub handler_mxhr {
     use Plack::Middleware::Hippie::MXHR;
 
     return sub {
-        my $writer = $_[0]->([ 200, [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"']]);
+        my $respond = shift;
+        my $fh = $env->{'psgix.io'}
+            or return $respond->([ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ]);
+
+        my $h = AnyEvent::Handle->new( fh => $fh );
+        $h->on_eof(   $self->connection_cleanup($env, $handler, $h) );
+        $h->on_error( $self->connection_cleanup($env, $handler, $h) );
+
+        # XXX: on_error or on_eof are not triggered if there's no rw events registered
+        $h->on_read(sub { die "this should not happen" });
+
+        my $writer = $respond->([ 200, [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"']]);
         $writer->write("--" . $boundary. "\n");
         $env->{'hippie.handle'} = Plack::Middleware::Hippie::MXHR->new( id => $client_id,
                                                                         boundary => $boundary,
                                                                         writer => $writer );
         $env->{'PATH_INFO'} = '/init';
+
         $handler->($env);
     };
 }
@@ -147,11 +159,7 @@ sub handler_ws {
         use Plack::Middleware::Hippie::WebSocket;
         $env->{'hippie.handle'} = Plack::Middleware::Hippie::WebSocket->new( id => $client_id,
                                                                              h => $h);
-        $h->on_error( sub {
-                          $env->{'PATH_INFO'} = '/error';
-                          $handler->($env);
-                          undef $env->{'hippie.handle'};
-                      });
+        $h->on_error( $self->connection_cleanup($env, $handler, $h) );
 
         $h->push_write($hs);
 
@@ -170,6 +178,17 @@ sub handler_ws {
         $handler->($env);
     };
 }
+
+sub connection_cleanup {
+    my ($self, $env, $handler, $h) = @_;
+    return sub {
+        $env->{'PATH_INFO'} = '/error';
+        $handler->($env);
+        $h->destroy;
+        undef $env->{'hippie.handle'};
+    };
+}
+
 
 1;
 __END__
