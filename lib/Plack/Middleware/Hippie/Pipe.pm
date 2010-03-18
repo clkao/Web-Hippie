@@ -21,7 +21,7 @@ sub call {
 
     $env->{'hippie.bus'} = $self->bus;
 
-    my $client_id = $env->{'hippie.client_id'} = Plack::Request->new($env)->param('client_id');
+    my $client_id = $env->{'hippie.client_id'} = Plack::Request->new($env)->param('client_id') || $env->{HTTP_X_HIPPIE_CLIENTID};
     if ($env->{PATH_INFO} eq '/poll') {
         my $args = $env->{'hippie.args'};
 
@@ -62,6 +62,7 @@ sub call {
         $self->app->($env);
     }
     else {
+        $self->get_listener($env);
         return $self->app->($env);
     }
 }
@@ -82,6 +83,7 @@ sub get_listener {
                        client_id => $client_id} );
     }
 
+    # XXX: callback to verify we have access to this listener.
     $env->{'hippie.listener'} = $sub;
     return $sub;
 

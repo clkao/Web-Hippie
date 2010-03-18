@@ -98,8 +98,13 @@ Hippie.prototype = {
             this.ws.send(JSON.stringify(msg));
         }
         else {
+            var that = this;
             jQuery.ajax({
                 url: "/_hippie/pub/"+this.arg,
+                beforeSend: function(xhr, s) {
+		    xhr.setRequestHeader("X-Hippie-ClientId", that.client_id);
+                    return true;
+                },
                 data: msg,
                 type: 'post',
                 dataType: 'json',
