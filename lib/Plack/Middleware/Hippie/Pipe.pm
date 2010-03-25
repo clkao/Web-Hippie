@@ -21,7 +21,8 @@ sub call {
 
     $env->{'hippie.bus'} = $self->bus;
 
-    my $client_id = $env->{'hippie.client_id'} = Plack::Request->new($env)->param('client_id') || $env->{HTTP_X_HIPPIE_CLIENTID};
+    my $client_id = $env->{'hippie.client_id'} ||=
+        Plack::Request->new($env)->param('client_id') || $env->{HTTP_X_HIPPIE_CLIENTID};
     if ($env->{PATH_INFO} eq '/poll') {
         my $args = $env->{'hippie.args'};
 
@@ -42,12 +43,8 @@ sub call {
         return sub {
             my $responder = shift;
             my $writer = $responder->([200, [ 'Content-Type' => 'application/json']]);
-            # XXX: callback for nuregistering clieng_mgr not yet invoked.
             $sub->poll_once(sub { $writer->write(JSON::encode_json(\@_));
-                                  $writer->close },
-                            30,
-                            sub { delete $self->client_mgr->{$client_id} },
-                        );
+                                  $writer->close });
         }
     }
     elsif ($env->{PATH_INFO} eq '/init') {
@@ -55,10 +52,19 @@ sub call {
             or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
 
         my $sub = $self->get_listener($env);
+        $sub->on_error(sub {
+                           my ($queue, $error, @msg) = @_;
+                           $queue->persistent(0);
+                           $queue->append(@msg);
+                       });
         $sub->poll(sub { $h->send_msg($_) for @_ });
     }
     elsif ($env->{PATH_INFO} eq '/error') {
-        $env->{'hippie.listener'}->cv->cb(undef);
+        my $sub = $env->{'hippie.listener'} or die;
+        # XXX: AnyMQ should provide unpoll method.
+        $sub->cv->cb(undef);
+        $sub->persistent(0);
+        $sub->{timer} = $sub->_reaper;
         $self->app->($env);
     }
     else {
@@ -75,6 +81,9 @@ sub get_listener {
     my $new = !$sub || $sub->destroyed;
     if ($new) {
         $sub = $self->client_mgr->{$client_id} = $self->bus->new_listener();
+        $sub->on_timeout(sub { $_[0]->destroyed(1);
+                               delete $self->client_mgr->{$client_id};
+                           });
         $env->{'hippie.listener'} = $sub;
         # XXX the recycling should be done in anymq
         $env->{PATH_INFO} = '/new_listener';
