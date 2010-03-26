@@ -65,7 +65,6 @@ sub call {
         $sub->cv->cb(undef);
         $sub->persistent(0);
         $sub->{timer} = $sub->_reaper;
-        $self->app->($env);
     }
     else {
         $self->get_listener($env);
@@ -82,6 +81,8 @@ sub get_listener {
     if ($new) {
         $sub = $self->client_mgr->{$client_id} = $self->bus->new_listener();
         $sub->on_timeout(sub { $_[0]->destroyed(1);
+                               $env->{PATH_INFO} = '/error';
+                               $self->app->($env);
                                delete $self->client_mgr->{$client_id};
                            });
         $env->{'hippie.listener'} = $sub;
