@@ -13,9 +13,10 @@
 <script src="/static/Stream.js"></script>
 
 <script src="/static/hippie.js"></script>
+<script src="/static/hippie.pipe.js"></script>
 
 <script>
-var hippie;
+var hpipe;
 var cookieName = 'tatsumaki_chat_ident';
 
 function doPost(el1, el) {
@@ -24,30 +25,37 @@ function doPost(el1, el) {
   var text = el.attr('value');
   if (!text) return;
 
-  hippie.send({ ident:ident, text:text });
+  hpipe.send({ type: 'message', room: "<?= $room ?>", ident:ident, text:text });
   el.attr('value', '');
   return;
 }
 
 $(function(){
     var timer_update;
-    hippie = new Hippie("<?= $host ?>", "<?= $room ?>",
-          function () {
-                $('#connection-status').addClass("connected").text("Connected");
-                if(timer_update) clearTimeout(timer_update);
-          },
-          function () {
-                var retry = new Date(new Date().getTime()+hippie.reconnect_time*1000);
-                var try_now = $('<span/>').text("Try now").click(function() { hippie.reconnect_now() });
-                var timer = $('<span/>');
-                var do_timer_update = function() {
-                    timer.text( Math.ceil((retry - new Date())/1000) + "s. " )
-                    timer_update = window.setTimeout( do_timer_update, 1000);
-                };
-                $('#connection-status').removeClass("connected").text("Server disconnected.  retry in ").append(timer).append(try_now);
-                do_timer_update();
-          },
-          function (d) {
+    hpipe = new Hippie.Pipe();
+    hpipe.arg = "<?= $room ?>";
+
+    var status = $('#connection-status');
+    jQuery(hpipe)
+        .bind("connected", function () {
+            status.addClass("connected").text("Connected");
+            if(timer_update) clearTimeout(timer_update);
+        })
+        .bind("disconnected", function() {
+            status.removeClass("connected").text("Server disconnected. ");
+        })
+        .bind("reconnecting", function(e, data) {
+            var retry = new Date(new Date().getTime()+data.after*1000);
+            var try_now = $('<span/>').text("Try now").click(data.try_now);
+            var timer = $('<span/>');
+            var do_timer_update = function() {
+                timer.text( Math.ceil((retry - new Date())/1000) + "s. " )
+                timer_update = window.setTimeout( do_timer_update, 1000);
+            };
+            status.text("Server disconnected.  retry in ").append(timer).append(try_now);
+            do_timer_update();
+        })
+        .bind("message.message", function (e, d) {
             try {
                 var src = d.avator || ("http://www.gravatar.com/avatar/" + $.md5(d.ident || 'foo'));
                 var name = d.name || d.ident || 'Anonymous';
@@ -77,8 +85,8 @@ $(function(){
                 $('#messages').prepend($('<tr/>').addClass('message').append(avatar).append(message).append(meta));
                 
             } catch(e) { if (console) console.log(e) }
-        }, 5);
-
+        });
+    hpipe.init();
     if ($.cookie(cookieName))
         $('#ident').attr('value', $.cookie(cookieName));
 

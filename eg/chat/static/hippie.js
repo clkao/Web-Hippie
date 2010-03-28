@@ -1,10 +1,9 @@
-var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_time) {
+var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
 
     this.arg = arg;
     this.on_disconnect = on_disconnect;
     this.on_connect = on_connect;
     this.on_event = on_event;
-    this.reconnect_time = reconnect_time;
 
     if ("WebSocket" in window) {
         var that = this;
@@ -15,16 +14,13 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
                 if (d.type == "hippie.pipe.set_client_id") {
                     that.client_id = d.client_id;
                 }
-                else {
-                    that.on_event(d);
-                }
+                that.on_event(d);
             }
             ws.onclose = ws.onerror = function(ev) {
                 that.on_disconnect();
             }
             ws.onopen = function() {
                 that.on_connect();
-                that.reconnect_time = reconnect_time;
             }
             that.ws = ws;
         };
@@ -42,16 +38,13 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
                 if (event.type == "hippie.pipe.set_client_id") {
                     that.client_id = event.client_id;
                 }
-                else {
-                    that.on_event(event);
-                }
+                that.on_event(event);
             });
             s.listen('complete', function() {
                 that.on_disconnect();
             });
             s.load("/_hippie/mxhr/" + arg + '?client_id=' + (that.client_id || ''));
             that.on_connect();
-            that.reconnect_time = reconnect_time; // XXX: this is not really correct, need onready hook from xmhr.
             that.mxhr = s;
         };
     }
@@ -63,6 +56,7 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
                         'hippie.pipe.set_client_id': function(e) {
                             that.client_id = e.client_id;
                             $.ev.url = '/_hippie/poll/' + arg + '?client_id=' + e.client_id;
+                            that.on_event(e);
                         }
                       }
                      );
@@ -71,25 +65,6 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, reconnect_
     }
 
     this.init();
-    if (reconnect_time) {
-        var disconnect = this.on_disconnect;
-        var that = this;
-        var try_reconnect = function() {
-            that.init();
-            that.reconnect_time *= 2;
-        };
-    
-        this.on_disconnect = function() {
-            that.reconnect_timeout = window.setTimeout(try_reconnect, that.reconnect_time * 1000);
-            disconnect();
-        };
-        this.reconnect_now = function() {
-            if (that.reconnect_timeout) {
-                clearTimeout(that.reconnect_timeout);
-                try_reconnect();
-            }
-        }
-    }
 };
 
 Hippie.prototype = {
