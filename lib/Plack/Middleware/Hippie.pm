@@ -8,6 +8,8 @@ use parent 'Plack::Middleware';
 use Plack::Util::Accessor qw( root init on_error on_message );
 use AnyEvent;
 use AnyEvent::Handle;
+use Plack::Request;
+use JSON;
 
 sub call {
     my ($self, $env) = @_;

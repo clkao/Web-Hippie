@@ -7,7 +7,7 @@ name 'Plack-Middleware-Hippie';
 all_from 'lib/Plack/Middleware/Hippie.pm';
 readme_from 'lib/Plack/Middleware/Hippie.pm';
 build_requires 'Test::More';
-
+test_requires 'Test::Requires';
 requires 'Plack';
 requires 'AnyMQ';
 
