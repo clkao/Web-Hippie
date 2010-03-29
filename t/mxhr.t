@@ -1,23 +1,39 @@
 use strict;
 use warnings;
 use File::Path;
-use Test::Requires qw(Test::TCP AnyEvent::HTTP::MXHR);
+use Test::Requires qw(Test::TCP AnyEvent::HTTP AnyEvent::HTTP::MXHR);
 use Test::More;
 use Plack::Builder;
 use Plack::Loader;
 use Time::HiRes 'time';
 
+my @handles;
 my $app = builder {
     enable 'Hippie';
     sub { my $env = shift;
           my $args = $env->{'hippie.args'};
           my $handle = $env->{'hippie.handle'};
           # Your handler based on PATH_INFO: /init, /error, /message
-          warn "==> reg timer";
-          $handle->{w} = AnyEvent->timer(
-              interval => 1,
-              cb => sub { $handle->send_msg({ type => 'clock', time => time() }) }
-          );
+          if ($env->{PATH_INFO} eq '/init') {
+              $handle->{cnt} = 2;
+              $handle->{w} = AnyEvent->timer(
+                  interval => 1,
+                  cb => sub { $handle->send_msg({ type => 'clock', time => time() });
+                              --$handle->{cnt} || delete $handle->{w}
+                          }
+              );
+              push @handles, $handle;
+          }
+          elsif ($env->{PATH_INFO} eq '/message') {
+              my $msg = $env->{'hippie.message'};
+              for (@handles) {
+                  $_->send_msg({ type => 'broadcast', payload => JSON::to_json($msg) });
+              }
+          }
+          elsif ($env->{PATH_INFO} eq '/error') {
+              diag 'client disconnected';
+          }
+          return [ '200', [ 'Content-Type' => 'application/hippie' ], [ "" ] ]
     };
 };
 
@@ -27,13 +43,29 @@ test_tcp(
         my $cv = AE::cv;
         my $t  = AE::timer 10, 0, sub { $cv->croak( "timeout" ); };
         my $cnt = 0;
+        my $http_guard;
         my $guard = mxhr_get "http://localhost:$port/mxhr", sub {
             my ($body, $headers) = @_;
-            if (++$cnt == 3) {
-                $cv->send;
-            }
-            is ($headers->{'content-type'}, 'application/json');
+            ++$cnt;
+            is ($headers->{'content-type'}, 'application/json', 'mxhr part is json');
             my $msg = JSON::from_json($body);
+
+            if ($cnt == 3) {
+                is ($msg->{type}, 'broadcast', 'got broadcast response');
+                is_deeply(scalar JSON::from_json($msg->{payload}),
+                          { foo1 => 'bar',
+                            foo2 => 'baz'},
+                          'payload matches');
+                $cv->send;
+                return;
+            }
+            elsif ($cnt == 2) {
+                $http_guard = http_get "http://localhost:$port/pub?foo1=bar&foo2=baz",
+                    sub {
+                        my ($body, $hdr) = @_;
+                        diag $body;
+                    };
+            }
             is ($msg->{type}, 'clock');
             diag time - $msg->{time};
             # return true if you want to keep reading. return false
