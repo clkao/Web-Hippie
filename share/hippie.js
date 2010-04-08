@@ -1,16 +1,16 @@
 var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
 
-    this.arg = arg;
+    this.arg = arg ? arg : '';
     this.on_disconnect = on_disconnect;
     this.on_connect = on_connect;
     this.on_event = on_event;
 
     this.detect();
 
+    var that = this;
     if (this.mode == 'ws') {
-        var that = this;
         this.init = function() {
-            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg + '?client_id=' + (that.client_id || ''));
+            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
                 if (d.type == "hippie.pipe.set_client_id") {
@@ -28,7 +28,6 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
         };
     }
     else if (this.mode == 'mxhr') {
-        var that = this;
         this.init = function() {
             var s = new DUI.Stream();
             // XXX: somehow s.listeners are shared between objects.
@@ -45,19 +44,18 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
             s.listen('complete', function() {
                 that.on_disconnect();
             });
-            s.load("/_hippie/mxhr/" + arg + '?client_id=' + (that.client_id || ''));
+            s.load("/_hippie/mxhr/" + that.arg + '?client_id=' + (that.client_id || ''));
             that.on_connect();
             that.mxhr = s;
         };
     }
     else if (this.mode == 'poll') {
-        var that = this;
         this.init = function() {
-            $.ev.loop('/_hippie/poll/' + arg,
+            $.ev.loop('/_hippie/poll/' + that.arg,
                       { '*': that.on_event,
                         'hippie.pipe.set_client_id': function(e) {
                             that.client_id = e.client_id;
-                            $.ev.url = '/_hippie/poll/' + arg + '?client_id=' + e.client_id;
+                            $.ev.url = '/_hippie/poll/' + that.arg + '?client_id=' + e.client_id;
                             that.on_event(e);
                         }
                       }
