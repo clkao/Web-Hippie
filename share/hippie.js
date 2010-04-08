@@ -5,7 +5,9 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
     this.on_connect = on_connect;
     this.on_event = on_event;
 
-    if ("WebSocket" in window) {
+    this.detect();
+
+    if (this.mode == 'ws') {
         var that = this;
         this.init = function() {
             ws = new WebSocket("ws://"+host+"/_hippie/ws/"+arg + '?client_id=' + (that.client_id || ''));
@@ -25,7 +27,7 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
             that.ws = ws;
         };
     }
-    else if (typeof DUI != 'undefined') {
+    else if (this.mode == 'mxhr') {
         var that = this;
         this.init = function() {
             var s = new DUI.Stream();
@@ -48,7 +50,7 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
             that.mxhr = s;
         };
     }
-    else {
+    else if (this.mode == 'poll') {
         var that = this;
         this.init = function() {
             $.ev.loop('/_hippie/poll/' + arg,
@@ -63,11 +65,43 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
             that.on_connect();
         }
     }
+    else {
+        throw new Error("unknown hippie mode: "+this.mode);
+    }
 
     this.init();
 };
 
 Hippie.prototype = {
+    detect: function() {
+        var match = /hippie\.mode=(\w+)/.exec(document.location.search);
+        if (match) {
+            this.mode = match[1];
+        }
+        else {
+            if ("WebSocket" in window) {
+                this.mode = 'ws';
+            }
+            else {
+                var req;
+                try {
+                    try { req = new ActiveXObject('MSXML2.XMLHTTP.6.0'); } catch(nope) {
+                        try { req = new ActiveXObject('MSXML3.XMLHTTP'); } catch(nuhuh) {
+                            try { req = new XMLHttpRequest(); } catch(noway) {
+                                throw new Error('Could not find supported version of XMLHttpRequest.');
+                            }
+                        }
+                    }
+                }
+                catch(e) {
+                    this.mode = 'poll';
+                    return;
+                }
+
+                this.mode = 'mxhr';
+            }
+        }
+    },
     send: function(msg) {
         if (this.ws) {
             this.ws.send(JSON.stringify(msg));
