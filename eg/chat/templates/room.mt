@@ -6,7 +6,6 @@
 <script src="/static/jquery.ev.js"></script>
 <script src="/static/jquery.md5.js"></script>
 <script src="/static/jquery.cookie.js"></script>
-<script src="/static/jquery.oembed.js"></script>
 <script src="/static/pretty.js"></script>
 
 <script src="/static/DUI.js"></script>
@@ -70,7 +69,6 @@ $(function(){
                 if (d.text) message.text(d.text);
                 if (d.html) message.html(d.html);
 
-                message.find('a').oembed(null, { embedMethod:"append", maxWidth:500 });
                 var name = d.name || (d.ident ? d.ident.split('@')[0] : null);
                 if (name)
                     message.prepend($('<span/>').addClass('name').text(name+': '));
