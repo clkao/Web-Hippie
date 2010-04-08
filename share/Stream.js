@@ -260,3 +260,4 @@ Function.prototype.bind = function() {
     payload: an entire piece of content, contained between multipart boundaries
     stream: the data sent between opening and closing an XHR. depending on how you implement MHXR, that could be a while.
 */
+;

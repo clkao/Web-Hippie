@@ -304,3 +304,5 @@ DUI.isClass = function(check, type)
     
     return false;
 }
+;
+
