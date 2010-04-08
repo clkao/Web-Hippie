@@ -1,12 +1,12 @@
 NAME
-    Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
+    Web::Hippie - Web toolkit for the long hair, or comet
 
 SYNOPSIS
       use Plack::Builder;
 
       builder {
         mount '/_hippie' => builder {
-          enable "Hippie";
+          enable "+Web::Hippie";
           sub { my $env = shift;
                 my $args = $env->{'hippie.args'};
                 my $handle = $env->{'hippie.handle'};
@@ -16,11 +16,11 @@ SYNOPSIS
       };
 
 DESCRIPTION
-    Plack::Middleware::Hippie provides unified bidirectional communication
-    over HTTP via websocket or xmhr.
+    Web::Hippie provides unified bidirectional communication over HTTP via
+    websocket or mxhr, for your "PSGI" web applications.
 
 SEE ALSO
-    hippie.js
+    Web::Hippie::App::JSFiles
 
 AUTHOR
     Chia-liang Kao <clkao@clkao.org>

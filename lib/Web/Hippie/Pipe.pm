@@ -1,4 +1,4 @@
-package Plack::Middleware::Hippie::Pipe;
+package Web::Hippie::Pipe;
 
 use strict;
 use 5.008_001;

@@ -1,8 +1,8 @@
-package Plack::Middleware::Hippie;
+package Web::Hippie;
 
 use strict;
 use 5.008_001;
-our $VERSION = '0.01';
+our $VERSION = '0.29';
 use parent 'Plack::Middleware';
 
 use Plack::Util::Accessor qw( root init on_error on_message );
@@ -97,7 +97,7 @@ sub handler_mxhr {
     my $boundary = MIME::Base64::encode(join("", map chr(rand(256)), 1..$size*3), "");
     $boundary =~ s/[\W]/X/g;  # ensure alnum only
 
-    use Plack::Middleware::Hippie::MXHR;
+    use Web::Hippie::Handle::MXHR;
 
     return sub {
         my $respond = shift;
@@ -113,9 +113,10 @@ sub handler_mxhr {
 
         my $writer = $respond->([ 200, [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"']]);
         $writer->write("--" . $boundary. "\n");
-        $env->{'hippie.handle'} = Plack::Middleware::Hippie::MXHR->new( id => $client_id,
-                                                                        boundary => $boundary,
-                                                                        writer => $writer );
+        $env->{'hippie.handle'} = Web::Hippie::Handle::MXHR->new
+            ( id       => $client_id,
+              boundary => $boundary,
+              writer   => $writer );
         $env->{'PATH_INFO'} = '/init';
 
         $handler->($env);
@@ -158,9 +159,10 @@ sub handler_ws {
 
         my $h = AnyEvent::Handle->new( fh => $fh );
 
-        use Plack::Middleware::Hippie::WebSocket;
-        $env->{'hippie.handle'} = Plack::Middleware::Hippie::WebSocket->new( id => $client_id,
-                                                                             h => $h);
+        use Web::Hippie::Handle::WebSocket;
+        $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
+            ( id => $client_id,
+              h  => $h );
         $h->on_error( $self->connection_cleanup($env, $handler, $h) );
 
         $h->push_write($hs);
@@ -201,7 +203,7 @@ __END__
 
 =head1 NAME
 
-Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
+Web::Hippie - Web toolkit for the long hair, or comet
 
 =head1 SYNOPSIS
 
@@ -209,23 +211,24 @@ Plack::Middleware::Hippie - Plack helpers for the long hair, or comet
 
   builder {
     mount '/_hippie' => builder {
-      enable "Hippie";
+      enable "+Web::Hippie";
       sub { my $env = shift;
             my $args = $env->{'hippie.args'};
             my $handle = $env->{'hippie.handle'};
             # Your handler based on PATH_INFO: /init, /error, /message
+      }
     };
-    mount '/' => $app;
+    mount '/' => my $app;
   };
 
 =head1 DESCRIPTION
 
-Plack::Middleware::Hippie provides unified bidirectional communication
-over HTTP via websocket or mxhr.
+Web::Hippie provides unified bidirectional communication over HTTP via
+websocket or mxhr, for your C<PSGI> web applications.
 
 =head1 SEE ALSO
 
-L<hippie.js>
+L<Web::Hippie::App::JSFiles>
 
 =head1 AUTHOR
 

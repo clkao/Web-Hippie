@@ -1,4 +1,4 @@
-package Plack::Middleware::Hippie::MXHR;
+package Web::Hippie::Handle::MXHR;
 use Moose;
 
 has id => (is => "ro");

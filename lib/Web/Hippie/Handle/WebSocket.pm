@@ -1,4 +1,4 @@
-package Plack::Middleware::Hippie::WebSocket;
+package Web::Hippie::Handle::WebSocket;
 use Moose;
 
 has id => (is => "ro");

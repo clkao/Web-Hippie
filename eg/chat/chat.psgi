@@ -13,7 +13,7 @@ use JSON;
 use Plack::Request;
 use Plack::Builder;
 use Plack::App::Cascade;
-use Plack::Middleware::Hippie::JSFiles;
+use Web::Hippie::App::JSFiles;
 
 use AnyMQ;
 
@@ -75,7 +75,7 @@ builder {
     };
     mount '/static' =>
         Plack::App::Cascade->new
-                ( apps => [ Plack::Middleware::Hippie::JSFiles->new->to_app,
+                ( apps => [ Web::Hippie::App::JSFiles->new->to_app,
                             Plack::App::File->new( root => 'static' )->to_app,
                         ] );
     mount '/' => $app;
