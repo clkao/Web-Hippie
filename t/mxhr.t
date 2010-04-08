@@ -9,7 +9,7 @@ use Time::HiRes 'time';
 
 my @handles;
 my $app = builder {
-    enable 'Hippie';
+    enable '+Web::Hippie';
     sub { my $env = shift;
           my $args = $env->{'hippie.args'};
           my $handle = $env->{'hippie.handle'};

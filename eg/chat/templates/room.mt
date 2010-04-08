@@ -156,7 +156,7 @@ Connecting...
 <table id="messages">
 </table>
 
-<div id="footer">Powered by <a href="http://github.com/clkao/Plack-Middleware-Hippie">Hippie/<?= $Plack::Middleware::Hippie::VERSION ?></a>.</div>
+<div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie/<?= $Web::Hippie::VERSION ?></a>.</div>
 
 </div>
 </body>
