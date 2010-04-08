@@ -11,6 +11,8 @@ test_requires 'Test::Requires';
 requires 'Plack';
 requires 'AnyMQ';
 
+install_share 'share';
+
 use_test_base;
 auto_include_deps;
 author_tests('xt');

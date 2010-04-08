@@ -12,6 +12,9 @@ use Path::Class qw/file dir/;
 use JSON;
 use Plack::Request;
 use Plack::Builder;
+use Plack::App::Cascade;
+use Plack::Middleware::Hippie::JSFiles;
+
 use AnyMQ;
 
 my $mtf = Text::MicroTemplate::File->new(
@@ -70,8 +73,10 @@ builder {
             return [ '200', [ 'Content-Type' => 'application/hippie' ], [ "" ] ]
         };
     };
-    mount '/' => builder {
-        enable "Static", path => sub { s!^/static/!! }, root => 'static';
-        $app;
-    };
+    mount '/static' =>
+        Plack::App::Cascade->new
+                ( apps => [ Plack::Middleware::Hippie::JSFiles->new->to_app,
+                            Plack::App::File->new( root => 'static' )->to_app,
+                        ] );
+    mount '/' => $app;
 };
