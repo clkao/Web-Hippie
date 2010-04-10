@@ -42,6 +42,9 @@ my $app = sub {
 };
 
 builder {
+#    enable "JSConcat",
+#        files => [<share/*.js>];
+#          filter => '/usr/local/bin/jsmin';
     mount '/_hippie' => builder {
         enable "+Web::Hippie";
         enable "+Web::Hippie::Pipe";
