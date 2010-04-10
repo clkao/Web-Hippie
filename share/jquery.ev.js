@@ -75,6 +75,7 @@
         dataType : 'json',
         url      : self.url,
         timeout  : self.timeout,
+        cache    : false,
         success  : function(messages, status) {
           // console.log('success', messages);
           self.run(messages)
