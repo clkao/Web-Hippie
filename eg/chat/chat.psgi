@@ -43,8 +43,8 @@ my $app = sub {
 
 builder {
     mount '/_hippie' => builder {
-        enable "Hippie";
-        enable "Hippie::Pipe";
+        enable "+Web::Hippie";
+        enable "+Web::Hippie::Pipe";
         sub {
             my $env = shift;
             my $room = $env->{'hippie.args'};
