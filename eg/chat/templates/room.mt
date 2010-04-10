@@ -1,18 +1,25 @@
-? my ($host, $room) = @_
+? my ($env, $host, $room) = @_;
 <html>
 <head>
 <title>Hippie Chat demo</title>
 <script src="/static/jquery-1.3.2.min.js"></script>
-<script src="/static/jquery.ev.js"></script>
 <script src="/static/jquery.md5.js"></script>
 <script src="/static/jquery.cookie.js"></script>
 <script src="/static/pretty.js"></script>
+
+? if ($env->{'psgix.jsconcat.url'}) {
+<script src="<?= $env->{'psgix.jsconcat.url'} ?>"></script>
+? }
+? else {
+<script src="/static/jquery.ev.js"></script>
 
 <script src="/static/DUI.js"></script>
 <script src="/static/Stream.js"></script>
 
 <script src="/static/hippie.js"></script>
 <script src="/static/hippie.pipe.js"></script>
+
+? }
 
 <script>
 var hpipe;

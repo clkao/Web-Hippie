@@ -28,12 +28,12 @@ my $app = sub {
 
     if ($req->path eq '/') {
         $res->content_type('text/html; charset=utf-8');
-        $res->content($mtf->render_file('index.mt'));
+        $res->content($mtf->render_file('index.mt', $env));
     } elsif ($req->path =~ m!^/chat!) {
         my $room = ($req->path =~ m!^/chat/(.+)!)[0];
         my $host = $req->header('Host');
         $res->content_type('text/html;charset=utf-8');
-        $res->content($mtf->render_file('room.mt', $host, $room));
+        $res->content($mtf->render_file('room.mt', $env, $host, $room));
     } else {
         $res->code(404);
     }
