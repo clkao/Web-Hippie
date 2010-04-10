@@ -111,9 +111,14 @@ sub handler_mxhr {
         # XXX: on_error or on_eof are not triggered if there's no rw events registered
         $h->on_read(sub { die "this should not happen" });
 
-        my $writer = $respond->([ 200,
-                                  [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"',
-                                    'Cache-control' => 'no-cache']]);
+        my $writer = $respond->
+            ([ 200,
+               [ 'Content-Type' => 'multipart/mixed; boundary="' . $boundary . '"',
+                 'Cache-Control' => 'no-cache, must-revalidate',
+                 'Pragma' => 'no-cache',
+                 'Expires' => HTTP::Date::time2str(0),
+                 'Last-Modified' => HTTP::Date::time2str(time())
+             ]]);
         $writer->write("--" . $boundary. "\n");
         $env->{'hippie.handle'} = Web::Hippie::Handle::MXHR->new
             ( id       => $client_id,

@@ -5,6 +5,7 @@ use 5.008_001;
 our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
+use HTTP::Date;
 use Plack::Util::Accessor qw( bus client_mgr );
 use Plack::Request;
 use Plack::Response;
@@ -18,7 +19,6 @@ sub prepare_app {
 
 sub call {
     my ($self, $env) = @_;
-
     $env->{'hippie.bus'} = $self->bus;
 
     my $client_id = $env->{'hippie.client_id'} ||=
@@ -42,7 +42,14 @@ sub call {
 
         return sub {
             my $responder = shift;
-            my $writer = $responder->([200, [ 'Content-Type' => 'application/json']]);
+            my $writer = $responder->
+                ([200,
+                  [ 'Content-Type' => 'application/json',
+                    'Cache-Control' => 'no-cache, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => HTTP::Date::time2str(0),
+                    'Last-Modified' => HTTP::Date::time2str(time())
+                ]]);
             $sub->poll_once(sub { $writer->write(JSON::encode_json(\@_));
                                   $writer->close });
         }
