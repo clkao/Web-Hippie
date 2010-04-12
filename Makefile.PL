@@ -9,7 +9,7 @@ readme_from 'lib/Web/Hippie.pm';
 build_requires 'Test::More';
 test_requires 'Test::Requires';
 requires 'Plack';
-requires 'AnyMQ';
+requires 'AnyMQ' => '0.30';
 
 install_share 'share';
 
