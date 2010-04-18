@@ -78,10 +78,13 @@ sub compat_handler {
     };
 }
 
+use Encode;
+
 sub handler_pub {
     my ($self, $env, $handler) = @_;
     my $req = Plack::Request->new($env);
     $env->{'hippie.message'} = $req->parameters->mixed;
+    Encode::_utf8_on($_) for values %{$env->{'hippie.message'}};
     $env->{'PATH_INFO'} = '/message';
 
     $handler->($env);
