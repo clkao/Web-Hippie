@@ -83,8 +83,8 @@ use Encode;
 sub handler_pub {
     my ($self, $env, $handler) = @_;
     my $req = Plack::Request->new($env);
-    $env->{'hippie.message'} = $req->parameters->mixed;
-    Encode::_utf8_on($_) for values %{$env->{'hippie.message'}};
+    $env->{'hippie.message'} =
+        JSON::from_json($req->parameters->mixed->{'message'}, { utf8 => 1 });
     $env->{'PATH_INFO'} = '/message';
 
     $handler->($env);

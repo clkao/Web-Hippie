@@ -112,7 +112,7 @@ Hippie.prototype = {
 		    xhr.setRequestHeader("X-Hippie-ClientId", that.client_id);
                     return true;
                 },
-                data: msg,
+                data: { message: JSON.stringify(msg) },
                 type: 'post',
                 dataType: 'json',
                 success: function(r) { }
