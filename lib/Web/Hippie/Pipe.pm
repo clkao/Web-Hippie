@@ -59,6 +59,11 @@ sub call {
             or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
 
         my $sub = $self->get_listener($env);
+        if ($env->{'hippie.handle'} &&
+            $env->{'hippie.handle'}->isa('Web::Hippie::Handle::WebSocket')) {
+            $sub->timeout(15);
+        }
+
         $sub->on_error(sub {
                            my ($queue, $error, @msg) = @_;
                            $queue->persistent(0);
@@ -68,12 +73,6 @@ sub call {
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;
-        # do not wait for timeout if it's websocket
-        if ($env->{'hippie.handle'}->isa('Web::Hippie::Handle::WebSocket')) {
-            $sub->on_timeout->($sub, 'websocket closed');
-            return;
-        }
-
         # XXX: AnyMQ should provide unpoll method.
         $sub->cv->cb(undef);
         $sub->persistent(0);
