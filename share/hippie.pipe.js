@@ -10,8 +10,6 @@ Hippie.Pipe.prototype = {
         this.hippie = new Hippie( document.location.host, this.args,
                                   function() {
                                       self.trigger("connected");
-                                      if (that.hippie && that.hippie.client_id)
-                                          self.trigger("ready", that.hippie.client_id);
                                   },
                                   function() {
                                       self.trigger("disconnected");
