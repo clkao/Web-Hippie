@@ -11,16 +11,19 @@ SYNOPSIS
                 my $args = $env->{'hippie.args'};
                 my $handle = $env->{'hippie.handle'};
                 # Your handler based on PATH_INFO: /init, /error, /message
+          }
         };
-        mount '/' => $app;
+        mount '/' => my $app;
       };
 
 DESCRIPTION
-    Web::Hippie provides unified bidirectional communication over HTTP via
-    websocket or mxhr, for your "PSGI" web applications.
+    Web::Hippie provides unified persistent and streamy communication
+    channel over HTTP via websocket (bidirectional) or mxhr
+    (uni-directional) for your <PSGI> application. See Web::Hippie::Pipe for
+    unified bidirectional abstraction with message bus.
 
 SEE ALSO
-    Web::Hippie::App::JSFiles
+    Web::Hippie::Pipe, Web::Hippie::App::JSFiles
 
 AUTHOR
     Chia-liang Kao <clkao@clkao.org>

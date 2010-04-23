@@ -4,7 +4,6 @@ eg/chat/chat.psgi
 eg/chat/static/jquery-1.3.2.min.js
 eg/chat/static/jquery.cookie.js
 eg/chat/static/jquery.md5.js
-eg/chat/static/jquery.oembed.js
 eg/chat/static/pretty.js
 eg/chat/static/screen.css
 eg/chat/templates/index.mt
@@ -21,15 +20,9 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/ReadmeFromPod.pm
 inc/Module/Install/Repository.pm
 inc/Module/Install/Share.pm
-inc/Module/Install/TestBase.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
-inc/Spiffy.pm
-inc/Test/Base.pm
-inc/Test/Base/Filter.pm
-inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
-inc/Test/More.pm
 inc/Test/Requires.pm
 lib/Web/Hippie.pm
 lib/Web/Hippie/App/JSFiles.pm
@@ -44,6 +37,7 @@ share/DUI.js
 share/hippie.js
 share/hippie.pipe.js
 share/jquery.ev.js
+share/json2.js
 share/Stream.js
 t/00_compile.t
 t/mxhr.t
