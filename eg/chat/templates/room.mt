@@ -19,6 +19,8 @@
 <script src="/static/hippie.js"></script>
 <script src="/static/hippie.pipe.js"></script>
 
+<script src="/static/json2.js"></script>
+
 ? }
 
 <script>
