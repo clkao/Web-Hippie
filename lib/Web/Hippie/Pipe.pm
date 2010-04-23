@@ -112,3 +112,49 @@ sub get_listener {
 }
 
 1;
+
+=head1 NAME
+
+Web::Hippie::Pipe - Persistent Connection Abstraction for Hippie
+
+=head1 SYNOPSIS
+
+  use Plack::Builder;
+  use AnyMQ;
+
+  builder {
+    mount '/_hippie' => builder {
+      enable "+Web::Hippie";
+      enable "+Web::Hippie::Pipe", bus => AnyMQ->new;
+      sub { my $env = shift;
+            my $bus       = $env->{'hippie.bus'}; # AnyMQ bus
+            my $listener  = $env->{'hippie.listener'}; # AnyMQ::Queue
+            my $client_id = $env->{'hippie.client_id'}; # client id
+
+            # Your handler based on PATH_INFO: /new_listener, /error, /message
+      }
+    };
+    mount '/' => my $app;
+  };
+
+=head1 DESCRIPTION
+
+Web::Hippie::Pipe provides unified bidirectional communication over
+HTTP via websocket, mxhr, or long-poll, for your C<PSGI> applications.
+
+=head1 SEE ALSO
+
+L<Web::Hippie>
+
+=head1 AUTHOR
+
+Chia-liang Kao E<lt>clkao@clkao.orgE<gt>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+=cut

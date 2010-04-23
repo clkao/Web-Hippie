@@ -2,7 +2,7 @@ package Web::Hippie;
 
 use strict;
 use 5.008_001;
-our $VERSION = '0.29';
+our $VERSION = '0.30';
 use parent 'Plack::Middleware';
 
 use Plack::Util::Accessor qw( root init on_error on_message );
@@ -234,12 +234,15 @@ Web::Hippie - Web toolkit for the long hair, or comet
 
 =head1 DESCRIPTION
 
-Web::Hippie provides unified bidirectional communication over HTTP via
-websocket or mxhr, for your C<PSGI> web applications.
+Web::Hippie provides unified persistent and streamy communication
+channel over HTTP via websocket (bidirectional) or mxhr
+(uni-directional) for your <PSGI> application.  See
+L<Web::Hippie::Pipe> for unified bidirectional abstraction with
+message bus.
 
 =head1 SEE ALSO
 
-L<Web::Hippie::App::JSFiles>
+L<Web::Hippie::Pipe>, L<Web::Hippie::App::JSFiles>
 
 =head1 AUTHOR
 

@@ -12,6 +12,11 @@ sub send_msg {
 __PACKAGE__->meta->make_immutable;
 no Moose;
 1;
+__END__
 
+=head1 NAME
 
-1;
+Web::Hippie::Handle::Websocket - Websocket handler
+
+=cut
+
