@@ -60,7 +60,8 @@ test_tcp(
                 return;
             }
             elsif ($cnt == 2) {
-                $http_guard = http_get "http://localhost:$port/pub?foo1=bar&foo2=baz",
+                my $data = JSON::to_json({foo1 => 'bar', foo2 => 'baz'});
+                $http_guard = http_get "http://localhost:$port/pub?message=$data",
                     sub {
                         my ($body, $hdr) = @_;
                         diag $body;
