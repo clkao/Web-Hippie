@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-Web::Hippie::Handle::Websocket - Websocket handler
+Web::Hippie::Handle::WebSocket - Websocket handler
 
 =cut
 
