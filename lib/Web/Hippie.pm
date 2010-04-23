@@ -10,6 +10,7 @@ use AnyEvent;
 use AnyEvent::Handle;
 use Plack::Request;
 use JSON;
+use HTTP::Date;
 
 sub call {
     my ($self, $env) = @_;
