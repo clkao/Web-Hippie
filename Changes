@@ -1,4 +1,7 @@
 Revision history for Perl extension Web::Hippie
 
+0.31 Mon Apr 26 11:33:52 CST 2010
+        - fix dependencies
+
 0.30 Fri Apr 23 14:16:29 CST 2010
         - original version

@@ -10,6 +10,9 @@ build_requires 'Test::More';
 test_requires 'Test::Requires';
 requires 'Plack';
 requires 'AnyMQ' => '0.30';
+requires 'Moose';
+requires 'JSON';
+requires 'AnyEvent';
 requires 'HTTP::Date';
 
 install_share 'share';
