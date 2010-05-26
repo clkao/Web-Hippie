@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>Hippie demo: timer</title>
+<script src="/static/jquery-1.3.2.min.js"></script>
+<script src="/static/jquery.ev.js"></script>
+<script src="/static/DUI.js"></script>
+<script src="/static/Stream.js"></script>
+<script src="/static/hippie.js"></script>
+<script src="/static/json2.js"></script>
+
+<script>
+
+function log_it(stuff) {
+  $("#log").append(stuff+'<br/>');
+}
+
+$(function() {
+  var hippie = new Hippie( document.location.host, 5, function() {
+                             log_it("connected");
+                           },
+                           function() {
+                             log_it("disconnected");
+                           },
+                           function(e) {
+                             log_it("got message: type = "+e.type+", time = "+e.time);
+                           } );
+});
+</script>
+<link rel="stylesheet" href="/static/screen.css" />
+</head>
+<body>
+
+<div id="content">
+
+<div id="log">
+
+</div>
+
+<div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie</a>.</div>
+
+</div>
+</body>
+</html>
