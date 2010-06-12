@@ -11,6 +11,7 @@ use AnyEvent::Handle;
 use Plack::Request;
 use JSON;
 use HTTP::Date;
+use Digest::MD5 qw(md5);
 
 sub call {
     my ($self, $env) = @_;
@@ -147,6 +148,64 @@ sub handler_ws {
 
     my $client_id = $req->param('client_id') || rand(1);
 
+    if ($env->{HTTP_SEC_WEBSOCKET_KEY1}) { # ver 76+
+        return sub {
+            my $respond = shift;
+            my $protocol = $env->{HTTP_SEC_WEBSOCKET_PROTOCOL};
+            my $request_uri = $req->request_uri;
+            my $hs = join "\015\012",
+                "HTTP/1.1 101 Web Socket Protocol Handshake",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Sec-WebSocket-Origin: $env->{HTTP_ORIGIN}",
+                "Sec-WebSocket-Location: ws://$env->{HTTP_HOST}$request_uri",
+                ($protocol ? "Sec-WebSocket-Protocol: $protocol" : ()),
+                '', '';
+
+            my $fh = $env->{'psgix.io'}
+                or return $respond->([ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ]);
+            # XXX: it seems AnyEvent::Handle is not happy with the 8
+            # bytes already in the buffer, so we have to read it
+            # rather than using push_read
+            my $key3;
+            read $fh, $key3, 8 or warn $!;
+            my $h = AnyEvent::Handle->new( fh => $fh );
+
+            use Web::Hippie::Handle::WebSocket;
+            $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
+                ( id => $client_id,
+                  h  => $h );
+            $h->on_error( $self->connection_cleanup($env, $handler, $h) );
+
+            my @keys = map {
+                my $k = $env->{'HTTP_SEC_WEBSOCKET_KEY'.$_};
+                join('', $k =~ m/\d/g) / scalar @{[$k =~ m/ /g]};
+            } (1,2);
+
+            $h->push_write($hs);
+
+            $h->push_write(md5(pack('NN', @keys) . $key3));
+
+            $h->on_read(sub {
+                            shift->push_read( line => "\xff", sub {
+                                                  my ($h, $json) = @_;
+                                                  $json =~ s/^\0//;
+
+                                                  $env->{'hippie.message'} = JSON::decode_json($json);
+                                                  $env->{'PATH_INFO'} = '/message';
+                                                  $handler->($env);
+                                              });
+                        });
+
+            $env->{'PATH_INFO'} = '/init';
+            $handler->($env);
+
+        };
+    }
+
+
+    # XXX v75 is deprecated.  This is intentionally not refactored
+    # into common code shared with the above, as this is to be removed at some point.
     return sub {
         my $respond = shift;
 
