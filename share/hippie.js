@@ -1,16 +1,17 @@
-var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
+var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
 
     this.arg = arg ? arg : '';
     this.on_disconnect = on_disconnect;
     this.on_connect = on_connect;
     this.on_event = on_event;
+    this.path = path ? path : '';
 
     this.detect();
 
     var that = this;
     if (this.mode == 'ws') {
         this.init = function() {
-            ws = new WebSocket("ws://"+host+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
+            ws = new WebSocket("ws://"+host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
                 if (d.type == "hippie.pipe.set_client_id") {
@@ -44,18 +45,18 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event) {
             s.listen('complete', function() {
                 that.on_disconnect();
             });
-            s.load("/_hippie/mxhr/" + that.arg + '?client_id=' + (that.client_id || ''));
+            s.load(that.path + "/_hippie/mxhr/" + that.arg + '?client_id=' + (that.client_id || ''));
             that.on_connect();
             that.mxhr = s;
         };
     }
     else if (this.mode == 'poll') {
         this.init = function() {
-            $.ev.loop('/_hippie/poll/' + that.arg,
+            $.ev.loop(that.path + '/_hippie/poll/' + that.arg,
                       { '*': that.on_event,
                         'hippie.pipe.set_client_id': function(e) {
                             that.client_id = e.client_id;
-                            $.ev.url = '/_hippie/poll/' + that.arg + '?client_id=' + e.client_id;
+                            $.ev.url = that.path + '/_hippie/poll/' + that.arg + '?client_id=' + e.client_id;
                             that.on_event(e);
                         }
                       }
@@ -107,7 +108,7 @@ Hippie.prototype = {
         else {
             var that = this;
             jQuery.ajax({
-                url: "/_hippie/pub/"+this.arg,
+                url: this.path + "/_hippie/pub/"+this.arg,
                 beforeSend: function(xhr, s) {
 		    xhr.setRequestHeader("X-Hippie-ClientId", that.client_id);
                     return true;
