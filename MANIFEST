@@ -9,6 +9,10 @@ eg/chat/static/screen.css
 eg/chat/templates/index.mt
 eg/chat/templates/room.mt
 eg/chat/templates/test.js
+eg/timer/app.psgi
+eg/timer/static/index.html
+eg/timer/static/jquery-1.3.2.min.js
+eg/timer/static/screen.css
 inc/Module/Install.pm
 inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm

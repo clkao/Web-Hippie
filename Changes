@@ -1,5 +1,8 @@
 Revision history for Perl extension Web::Hippie
 
+0.32 Tue Jul 20 20:57:44 CST 2010
+        - support websockets draft#76
+
 0.31 Mon Apr 26 11:33:52 CST 2010
         - fix dependencies
 
