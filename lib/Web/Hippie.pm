@@ -191,7 +191,9 @@ sub handler_ws {
                                                   my ($h, $json) = @_;
                                                   $json =~ s/^\0//;
 
-                                                  $env->{'hippie.message'} = JSON::decode_json($json);
+                                                  $env->{'hippie.message'} = eval { JSON::decode_json($json) };
+                                                  return $h->on_error() if $@;
+
                                                   $env->{'PATH_INFO'} = '/message';
                                                   $handler->($env);
                                               });
@@ -242,7 +244,9 @@ sub handler_ws {
                                               my ($h, $json) = @_;
                                               $json =~ s/^\0//;
 
-                                              $env->{'hippie.message'} = JSON::decode_json($json);
+                                              $env->{'hippie.message'} = eval { JSON::decode_json($json) };
+                                              return $h->on_error() if $@;
+
                                               $env->{'PATH_INFO'} = '/message';
                                               $handler->($env);
                 });
