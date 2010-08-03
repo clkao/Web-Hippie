@@ -169,7 +169,7 @@ sub handler_ws {
             # rather than using push_read
             my $key3;
             read $fh, $key3, 8 or warn $!;
-            my $h = AnyEvent::Handle->new( fh => $fh );
+            my $h = AnyEvent::Handle->new( fh => $fh, autocork => 1 );
 
             use Web::Hippie::Handle::WebSocket;
             $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
