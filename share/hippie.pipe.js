@@ -3,11 +3,14 @@ Hippie.Pipe = function() {
 
 Hippie.Pipe.prototype = {
     initial_reconnect: 5,
-    init: function() {
+    init: function(opt) {
         var self = jQuery(this);
         var that = this;
+        if (!opt) opt = {}
+        if (!opt.host)
+            opt.host = document.location.host;
         this.reconnect_time = this.initial_reconnect;
-        this.hippie = new Hippie( document.location.host, this.args,
+        this.hippie = new Hippie( opt.host, this.args,
                                   function() {
                                       self.trigger("connected");
                                   },
