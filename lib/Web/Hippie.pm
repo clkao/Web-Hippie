@@ -189,7 +189,10 @@ sub handler_ws {
             $h->on_read(sub {
                             shift->push_read( line => "\xff", sub {
                                                   my ($h, $json) = @_;
-                                                  $json =~ s/^\0//;
+                                                  unless ($json =~ s/^\0//) {
+                                                      # closing
+                                                      return $h->on_error();
+                                                  }
 
                                                   $env->{'hippie.message'} = eval { JSON::decode_json($json) };
                                                   if ($@) {
