@@ -5,7 +5,7 @@ use 5.008_001;
 our $VERSION = '0.32';
 use parent 'Plack::Middleware';
 
-use Plack::Util::Accessor qw( root init on_error on_message );
+use Plack::Util::Accessor qw( root init on_error on_message trusted_origin );
 use AnyEvent;
 use AnyEvent::Handle;
 use Plack::Request;
@@ -149,6 +149,14 @@ sub handler_ws {
     my $client_id = $req->param('client_id') || rand(1);
 
     if ($env->{HTTP_SEC_WEBSOCKET_KEY1}) { # ver 76+
+
+        my $trusted_origin = $self->trusted_origin || '.*';
+        if ($env->{HTTP_ORIGIN} !~ m/^$trusted_origin/) {
+            $env->{'psgi.errors'}->print("Client origin $env->{HTTP_ORIGIN} not allowed.\n");
+            return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
+        }
+
+
         return sub {
             my $respond = shift;
             my $protocol = $env->{HTTP_SEC_WEBSOCKET_PROTOCOL};
