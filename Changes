@@ -1,5 +1,10 @@
 Revision history for Perl extension Web::Hippie
 
+0.33 Wed Sep  1 07:11:10 CST 2010
+        - allow trusted_origin configuration
+        - allow custom hippie endpoint from hippie.pipe.js
+        - handle websockets closing handshake.
+
 0.32 Tue Jul 20 20:57:44 CST 2010
         - support websockets draft#76
 
