@@ -1,5 +1,8 @@
 Revision history for Perl extension Web::Hippie
 
+0.34 Sun Sep 12 13:00:12 CST 2010
+        - support wss.
+
 0.33 Wed Sep  1 07:11:10 CST 2010
         - allow trusted_origin configuration
         - allow custom hippie endpoint from hippie.pipe.js
