@@ -5,13 +5,16 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
     this.on_connect = on_connect;
     this.on_event = on_event;
     this.path = path ? path : '';
-
     this.detect();
+
+    if (!host.match('://')) {// protcol not provided
+        host = document.location.protocol.replace(/http/, 'ws') + '//' + host;
+    }
 
     var that = this;
     if (this.mode == 'ws') {
         this.init = function() {
-            ws = new WebSocket("ws://"+host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
+            ws = new WebSocket(host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
                 if (d.type == "hippie.pipe.set_client_id") {
