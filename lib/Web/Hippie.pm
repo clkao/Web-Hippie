@@ -156,7 +156,7 @@ sub handler_ws {
             return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
         }
 
-
+        my $ws = $env->{HTTPS} ? 'wss' : 'ws';
         return sub {
             my $respond = shift;
             my $protocol = $env->{HTTP_SEC_WEBSOCKET_PROTOCOL};
@@ -166,7 +166,7 @@ sub handler_ws {
                 "Upgrade: WebSocket",
                 "Connection: Upgrade",
                 "Sec-WebSocket-Origin: $env->{HTTP_ORIGIN}",
-                "Sec-WebSocket-Location: ws://$env->{HTTP_HOST}$request_uri",
+                "Sec-WebSocket-Location: $ws://$env->{HTTP_HOST}$request_uri",
                 ($protocol ? "Sec-WebSocket-Protocol: $protocol" : ()),
                 '', '';
 
