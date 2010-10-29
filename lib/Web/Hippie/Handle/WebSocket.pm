@@ -1,5 +1,5 @@
 package Web::Hippie::Handle::WebSocket;
-use Moose;
+use Any::Moose;
 
 has id => (is => "ro");
 has h => (is => "ro", isa => "AnyEvent::Handle");
@@ -10,7 +10,7 @@ sub send_msg {
 }
 
 __PACKAGE__->meta->make_immutable;
-no Moose;
+no Any::Moose;
 1;
 __END__
 

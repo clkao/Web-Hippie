@@ -1,5 +1,5 @@
 package Web::Hippie::Handle::MXHR;
-use Moose;
+use Any::Moose;
 
 has id => (is => "ro");
 has boundary => (is => "ro");
@@ -13,7 +13,7 @@ sub send_msg {
 }
 
 __PACKAGE__->meta->make_immutable;
-no Moose;
+no Any::Moose;
 1;
 __END__
 
