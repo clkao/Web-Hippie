@@ -1,5 +1,8 @@
 package Web::Hippie::Handle::WebSocket;
-use Class::Accessor::Fast 'antlers';
+BEGIN {
+    eval "use Class::XSAccessor::Compat 'antlers'; 1" or
+    eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
+}
 
 has id => (is => "ro");
 has h => (is => "ro", isa => "AnyEvent::Handle");
