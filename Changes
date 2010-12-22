@@ -1,5 +1,9 @@
 Revision history for Perl extension Web::Hippie
 
+0.35 Wed Dec 22 22:40:04 CST 2010
+        - replace moose with class::accessor antlers.
+        - use class::xsaccessor if available.
+
 0.34 Sun Sep 12 13:00:12 CST 2010
         - support wss.
 
