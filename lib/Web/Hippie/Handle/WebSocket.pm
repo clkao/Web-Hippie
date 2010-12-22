@@ -1,16 +1,23 @@
 package Web::Hippie::Handle::WebSocket;
-use Moose;
+use Class::Accessor::Fast 'antlers';
 
 has id => (is => "ro");
 has h => (is => "ro", isa => "AnyEvent::Handle");
+
+sub new {
+    my $class = shift;
+    unless (ref $_[0] eq 'HASH') {
+        Carp::carp "use of hash in constructor is deprecated. use hashref please instead.";
+        @_ = { @_ };
+    }
+    return $class->SUPER::new(@_);
+}
 
 sub send_msg {
     my ($self, $msg) = @_;
     $self->h->push_write(("\x00" . JSON::encode_json($msg) . "\xff"));
 }
 
-__PACKAGE__->meta->make_immutable;
-no Moose;
 1;
 __END__
 
