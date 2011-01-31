@@ -181,8 +181,8 @@ sub handler_ws {
 
             use Web::Hippie::Handle::WebSocket;
             $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
-                ( id => $client_id,
-                  h  => $h );
+                ({ id => $client_id,
+                   h  => $h });
             $h->on_error( $self->connection_cleanup($env, $handler, $h) );
 
             my @keys = map {
