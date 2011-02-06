@@ -1,5 +1,8 @@
 Revision history for Perl extension Web::Hippie
 
+0.36 Sun Feb  6 21:29:11 CST 2011
+        - silence a warning caused by bad use of class::accessor constructor.
+
 0.35 Wed Dec 22 22:40:04 CST 2010
         - replace moose with class::accessor antlers.
         - use class::xsaccessor if available.
