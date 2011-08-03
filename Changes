@@ -1,5 +1,9 @@
 Revision history for Perl extension Web::Hippie
 
+
+0.38 Wed Aug  3 22:09:55 CST 2011
+        - fix websocket messages for draft-ietf-hybi-00.
+
 0.37 Wed Aug  3 21:38:54 CST 2011
         - use protocol::websocket, so we can support draft-ietf-hybi-10.
 
