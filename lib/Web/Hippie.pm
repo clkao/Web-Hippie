@@ -5,7 +5,7 @@ use 5.008_001;
 our $VERSION = '0.36';
 use parent 'Plack::Middleware';
 
-use Plack::Util::Accessor qw( root init on_error on_message trusted_origin );
+use Plack::Util::Accessor qw( on_error on_message trusted_origin );
 use AnyEvent;
 use AnyEvent::Handle;
 use Plack::Request;
@@ -15,11 +15,6 @@ use Digest::MD5 qw(md5);
 
 sub call {
     my ($self, $env) = @_;
-
-    if ($self->root) {
-        warn "deprecated usage";
-        return $self->compat_call($env);
-    }
 
     my (undef, $type, $arg) = split('/', $env->{PATH_INFO}, 3);
 
@@ -34,51 +29,7 @@ sub call {
     return $code->($self, $env, $self->app);
 
 }
-sub compat_call {
-    my ($self, $env) = @_;
-    my $path_match = $self->root or return;
-    my $path = $env->{PATH_INFO};
 
-    my ($type, $arg) = $path =~ m|^\Q$path_match\E/(\w+)(?:/(.*))?$|;
-    unless ($type) {
-        return $self->app->($env);
-    }
-
-    $env->{'hippie.args'} = $arg;
-
-    my $code = $self->can("handler_$type");
-    unless ($code) {
-        return $self->app->($env);
-    }
-
-    return $code->($self, $env, $self->compat_handler);
-}
-
-sub compat_handler {
-    my $self = shift;
-    return sub {
-        my $env = shift;
-        my $arg = $env->{'hippie.args'};
-        if ($env->{PATH_INFO} eq '/message') {
-            $self->on_message->($arg, $env->{'hippie.message'});
-        }
-        else {
-            my $h = $env->{'hippie.handle'}
-                or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
-
-            if ($env->{PATH_INFO} eq '/init') {
-                $self->init->($arg, $h);
-            }
-            elsif ($env->{PATH_INFO} eq '/error') { 
-                $self->on_error->($arg, $h);
-            }
-            else {
-                die "unknown hippie message";
-            }
-        }
-        return [ '200', [ 'Content-Type' => 'text/plain' ], [ "" ] ]
-    };
-}
 
 use Encode;
 
