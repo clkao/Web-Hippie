@@ -1,4 +1,5 @@
 package Web::Hippie::Handle::WebSocket;
+use strict;
 BEGIN {
     eval "use Class::XSAccessor::Compat 'antlers'; 1" or
     eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
@@ -22,7 +23,7 @@ sub send_msg {
 
     my $bytes = Protocol::WebSocket::Frame->new
         ( buffer => JSON::encode_json($msg),
-          version => $version)->to_bytes;
+          version => $self->version)->to_bytes;
     $self->h->push_write($bytes);
 }
 
