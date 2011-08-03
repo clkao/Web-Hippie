@@ -1,5 +1,8 @@
 Revision history for Perl extension Web::Hippie
 
+0.37 Wed Aug  3 21:38:54 CST 2011
+        - use protocol::websocket, so we can support draft-ietf-hybi-10.
+
 0.36 Sun Feb  6 21:29:11 CST 2011
         - silence a warning caused by bad use of class::accessor constructor.
 
