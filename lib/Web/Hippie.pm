@@ -135,142 +135,70 @@ sub handler_mxhr {
     };
 }
 
+use Protocol::WebSocket::Frame;
+use Protocol::WebSocket::Handshake::Server;
+use Web::Hippie::Handle::WebSocket;
+
 sub handler_ws {
     my ($self, $env, $handler) = @_;
 
     my $req = Plack::Request->new($env);
     my $res = $req->new_response(200);
-    unless (    $env->{HTTP_CONNECTION} eq 'Upgrade'
-            and $env->{HTTP_UPGRADE}    eq 'WebSocket') {
-        $res->code(400);
-        return $res->finalize;
+
+    my $trusted_origin = $self->trusted_origin || '.*';
+    if ($env->{HTTP_ORIGIN} !~ m/^$trusted_origin/) {
+        $env->{'psgi.errors'}->print("Client origin $env->{HTTP_ORIGIN} not allowed.\n");
+        return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
     }
 
+    my $hs = Protocol::WebSocket::Handshake::Server->new_from_psgi($env);
     my $client_id = $req->param('client_id') || rand(1);
 
-    if ($env->{HTTP_SEC_WEBSOCKET_KEY1}) { # ver 76+
+    my $fh = $env->{'psgix.io'}
+        or return [ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ];
 
-        my $trusted_origin = $self->trusted_origin || '.*';
-        if ($env->{HTTP_ORIGIN} !~ m/^$trusted_origin/) {
-            $env->{'psgi.errors'}->print("Client origin $env->{HTTP_ORIGIN} not allowed.\n");
-            return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
-        }
+    return [ 501, [ "Content-Type", "text/plain" ],
+             [ "Failed to initialize websocket" ] ]
+        unless $hs->parse($fh);
 
-        my $ws = $env->{HTTPS} ? 'wss' : 'ws';
-        return sub {
-            my $respond = shift;
-            my $protocol = $env->{HTTP_SEC_WEBSOCKET_PROTOCOL};
-            my $request_uri = $req->request_uri;
-            my $hs = join "\015\012",
-                "HTTP/1.1 101 Web Socket Protocol Handshake",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Sec-WebSocket-Origin: $env->{HTTP_ORIGIN}",
-                "Sec-WebSocket-Location: $ws://$env->{HTTP_HOST}$request_uri",
-                ($protocol ? "Sec-WebSocket-Protocol: $protocol" : ()),
-                '', '';
+    return [ 501, [ "Content-Type", "text/plain" ],
+             [ "websocket handshake incomplete" ] ]
+        unless $hs->is_done;
 
-            my $fh = $env->{'psgix.io'}
-                or return $respond->([ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ]);
-            # XXX: it seems AnyEvent::Handle is not happy with the 8
-            # bytes already in the buffer, so we have to read it
-            # rather than using push_read
-            my $key3;
-            read $fh, $key3, 8 or warn $!;
-            my $h = AnyEvent::Handle->new( fh => $fh, autocork => 1 );
+    my $version = $hs->version;
+    my $frame = Protocol::WebSocket::Frame->new(version => $version);
 
-            use Web::Hippie::Handle::WebSocket;
-            $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
-                ({ id => $client_id,
-                   h  => $h });
-            $h->on_error( $self->connection_cleanup($env, $handler, $h) );
-
-            my @keys = map {
-                my $k = $env->{'HTTP_SEC_WEBSOCKET_KEY'.$_};
-                join('', $k =~ m/\d/g) / scalar @{[$k =~ m/ /g]};
-            } (1,2);
-
-            $h->push_write($hs);
-
-            $h->push_write(md5(pack('NN', @keys) . $key3));
-
-            $h->on_read(sub {
-                            shift->push_read( line => "\xff", sub {
-                                                  my ($h, $json) = @_;
-                                                  unless ($json =~ s/^\0//) {
-                                                      # closing
-                                                      return $h->on_error();
-                                                  }
-
-                                                  $env->{'hippie.message'} = eval { JSON::decode_json($json) };
-                                                  if ($@) {
-                                                      warn $@;
-                                                      return $h->on_error();
-                                                  }
-
-                                                  $env->{'PATH_INFO'} = '/message';
-                                                  $handler->($env);
-                                              });
-                        });
-
-            $env->{'PATH_INFO'} = '/init';
-            $handler->($env);
-
-        };
-    }
-
-
-    # XXX v75 is deprecated.  This is intentionally not refactored
-    # into common code shared with the above, as this is to be removed at some point.
+    my $h = AnyEvent::Handle->new( fh => $fh, autocork => 1 );
     return sub {
-        my $respond = shift;
+        my $responder = shift;
 
-        # XXX: we could use $respond to send handshake response
-        # headers, but 101 status message should be 'Web Socket
-        # Protocol Handshake' rather than 'Switching Protocols'
-        # and we should send HTTP/1.1 response which Twiggy
-        # doesn't implement yet.
+        $h->push_write($hs->to_string);
+        $h->on_read(sub {
+                        shift->push_read(
+                            sub {
+                                $frame->append($_[0]->rbuf);
+                                while (my $message = $frame->next_bytes) {
+                                    $env->{'hippie.message'} = eval { JSON::decode_json($message) };
+                                    if ($@) {
+                                        warn $@;
+                                        return $h->on_error();
+                                    }
 
-        my $request_uri = $req->request_uri;
-        my $hs = join "\015\012",
-                "HTTP/1.1 101 Web Socket Protocol Handshake",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "WebSocket-Origin: $env->{HTTP_ORIGIN}",
-                "WebSocket-Location: ws://$env->{HTTP_HOST}$request_uri",
-                '', '';
-
-        my $fh = $env->{'psgix.io'}
-            or return $respond->([ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ]);
-
-        my $h = AnyEvent::Handle->new( fh => $fh );
-
-        use Web::Hippie::Handle::WebSocket;
+                                    $env->{'PATH_INFO'} = '/message';
+                                    $handler->($env);
+                                }
+                            }
+                        );
+                    });
         $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
             ({ id => $client_id,
+               version => $version,
                h  => $h });
         $h->on_error( $self->connection_cleanup($env, $handler, $h) );
 
-        $h->push_write($hs);
-
-        $h->on_read(sub {
-                        shift->push_read( line => "\xff", sub {
-                                              my ($h, $json) = @_;
-                                              $json =~ s/^\0//;
-
-                                              $env->{'hippie.message'} = eval { JSON::decode_json($json) };
-                                              if ($@) {
-                                                  warn $@;
-                                                  return $h->on_error();
-                                              }
-
-                                              $env->{'PATH_INFO'} = '/message';
-                                              $handler->($env);
-                });
-            });
-
         $env->{'PATH_INFO'} = '/init';
         $handler->($env);
+
     };
 }
 

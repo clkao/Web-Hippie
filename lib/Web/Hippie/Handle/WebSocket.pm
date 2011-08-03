@@ -6,6 +6,7 @@ BEGIN {
 
 has id => (is => "ro");
 has h => (is => "ro", isa => "AnyEvent::Handle");
+has version => (is => "rw", isa => "Str");
 
 sub new {
     my $class = shift;
@@ -18,7 +19,11 @@ sub new {
 
 sub send_msg {
     my ($self, $msg) = @_;
-    $self->h->push_write(("\x00" . JSON::encode_json($msg) . "\xff"));
+
+    my $bytes = Protocol::WebSocket::Frame->new
+        ( buffer => JSON::encode_json($msg),
+          version => $version)->to_bytes;
+    $self->h->push_write($bytes);
 }
 
 1;

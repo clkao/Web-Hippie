@@ -11,6 +11,7 @@ test_requires 'Test::Requires';
 requires 'Plack';
 requires 'AnyMQ' => '0.30';
 requires 'Class::Accessor' => '0.34';
+requires 'Protocol::WebSocket' => '0.00903';
 requires 'JSON';
 requires 'AnyEvent';
 requires 'HTTP::Date';
