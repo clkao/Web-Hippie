@@ -96,12 +96,6 @@ sub handler_ws {
     my $req = Plack::Request->new($env);
     my $res = $req->new_response(200);
 
-    my $trusted_origin = $self->trusted_origin || '.*';
-    if ($env->{HTTP_ORIGIN} !~ m/^$trusted_origin/) {
-        $env->{'psgi.errors'}->print("Client origin $env->{HTTP_ORIGIN} not allowed.\n");
-        return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
-    }
-
     my $hs = Protocol::WebSocket::Handshake::Server->new_from_psgi($env);
     my $client_id = $req->param('client_id') || rand(1);
 
@@ -111,6 +105,14 @@ sub handler_ws {
     return [ 501, [ "Content-Type", "text/plain" ],
              [ "Failed to initialize websocket" ] ]
         unless $hs->parse($fh);
+
+    if (my $origin = $hs->req->origin) {
+        my $trusted_origin = $self->trusted_origin || '.*';
+        if ($origin !~ m/^$trusted_origin/) {
+            $env->{'psgi.errors'}->print("Client origin $origin not allowed.\n");
+            return [403, ['Content-Type' => 'text/plain'], ['origin not allowed']];
+        }
+    }
 
     return [ 501, [ "Content-Type", "text/plain" ],
              [ "websocket handshake incomplete" ] ]
