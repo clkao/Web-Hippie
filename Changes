@@ -1,6 +1,9 @@
 Revision history for Perl extension Web::Hippie
 
 
+0.39 Sun Aug 28 20:25:56 CST 2011
+        - get request origin from protocol::websocket.
+
 0.38 Wed Aug  3 22:09:55 CST 2011
         - fix websocket messages for draft-ietf-hybi-00.
 
