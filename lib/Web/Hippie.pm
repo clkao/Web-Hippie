@@ -35,9 +35,24 @@ use Encode;
 
 sub handler_pub {
     my ($self, $env, $handler) = @_;
+    
     my $req = Plack::Request->new($env);
-    $env->{'hippie.message'} =
-        JSON::from_json($req->parameters->mixed->{'message'}, { utf8 => 1 });
+
+    # get message
+    my $message_raw = $req->parameters->mixed->{'message'};
+    unless ($message_raw) {
+        return [400, ['Content-Type' => 'text/plain'], ['empty request']];
+    }
+
+    # parse JSON
+    my $message = eval { JSON::from_json($message_raw, { utf8 => 1 }) };
+    unless ($message) {
+        $env->{'psgi.errors'}->print("Failed to parse JSON '$message_raw': $@\n");
+        return [400, ['Content-Type' => 'text/plain'], ['invalid JSON in request']];
+    }
+
+    # forward to message publish handler
+    $env->{'hippie.message'} = $message;
     $env->{'PATH_INFO'} = '/message';
 
     $handler->($env);
