@@ -37,7 +37,7 @@ $(function(){
                 );
                 $('.pretty-time', meta).prettyDate();
                 $('#messages').prepend($('<tr/>').addClass('message').append(avatar).append(message).append(meta));
-                
+
             } catch(e) { if (console) console.log(e) }
         }
     }
