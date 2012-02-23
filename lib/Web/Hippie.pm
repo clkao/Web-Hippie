@@ -2,7 +2,7 @@ package Web::Hippie;
 
 use strict;
 use 5.008_001;
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 use parent 'Plack::Middleware';
 
 use Plack::Util::Accessor qw( on_error on_message trusted_origin );
