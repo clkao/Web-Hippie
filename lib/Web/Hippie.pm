@@ -104,7 +104,7 @@ sub handler_ws {
 
     return [ 501, [ "Content-Type", "text/plain" ],
              [ "Failed to initialize websocket" ] ]
-        unless $hs->parse($fh);
+        unless $hs->parse( $hs->version eq 'draft-ietf-hybi-17' ? '' : $fh);
 
     if (my $origin = $hs->req->origin) {
         my $trusted_origin = $self->trusted_origin || '.*';
