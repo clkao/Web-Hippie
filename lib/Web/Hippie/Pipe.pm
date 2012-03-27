@@ -72,8 +72,8 @@ sub call {
         $sub->poll(sub { $h->send_msg($_) for @_ });
     }
     elsif ($env->{PATH_INFO} eq '/message') {
-	# listener is not required to publish events
-	return $self->app->($env);
+        # listener is not required to publish events
+        return $self->app->($env);
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;
