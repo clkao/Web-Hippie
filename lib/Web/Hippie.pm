@@ -2,7 +2,7 @@ package Web::Hippie;
 
 use strict;
 use 5.008_001;
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 use parent 'Plack::Middleware';
 
 use Plack::Util::Accessor qw( on_error on_message trusted_origin );
@@ -119,7 +119,7 @@ sub handler_ws {
 
     return [ 501, [ "Content-Type", "text/plain" ],
              [ "Failed to initialize websocket" ] ]
-        unless $hs->parse($fh);
+        unless $hs->parse( $hs->version eq 'draft-ietf-hybi-17' ? '' : $fh);
 
     if (my $origin = $hs->req->origin) {
         my $trusted_origin = $self->trusted_origin || '.*';
