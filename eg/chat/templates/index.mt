@@ -14,15 +14,6 @@ function doPost(el1, el) {
   location.href = 'http://' + location.host + '/chat/' + text;
   return;
 }
-
-$(function(){
-    if ("WebSocket" in window) {
-    }
-    else {
-        $("#content").text("This browser doesn't support WebSocket.");
-        return;
-    }
-});
 </script>
 <link rel="stylesheet" href="/static/screen.css" />
 <link rel="stylesheet" href="/static/chat.css" />
