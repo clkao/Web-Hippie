@@ -1,31 +1,34 @@
-Hippie.Pipe = function() {
+Hippie.Pipe = function(opt) {
+    if (!opt) opt = {}
+
+    this.opt = opt;
 };
 
 Hippie.Pipe.prototype = {
     initial_reconnect: 5,
-    init: function(opt) {
+    init: function() {
+        // back-compat
+        if (arguments.length)
+            this.opt = arguments[0];
+
         var self = jQuery(this);
         var that = this;
-        if (!opt) opt = {}
-        if (!opt.host)
-            opt.host = document.location.host;
         this.reconnect_time = this.initial_reconnect;
-        this.hippie = new Hippie( opt.host, this.args,
-                                  function() {
-                                      self.trigger("connected");
-                                  },
-                                  function() {
-                                      self.trigger("disconnected");
-                                  },
-                                  function(e) {
-                                      if (e.type == "hippie.pipe.set_client_id") {
-                                          self.trigger("ready", e.client_id);
-                                      }
-                                      else {
-                                          self.trigger("message."+e.type, e);
-                                      }
-                                  });
-
+        this.hippie = new Hippie( {
+            host:      this.opt.host,
+            path:      this.opt.path,
+            client_id: this.opt.client_id,
+            arg:       this.opt.arg,
+            on_connect:    function() { self.trigger("connected"); },
+            on_disconnect: function() { self.trigger("disconnected"); },
+            on_event:      function(e) {
+                if (e.type == "hippie.pipe.set_client_id") {
+                    self.trigger("ready", e.client_id);
+                }
+                else {
+                    self.trigger("message."+e.type, e);
+                }
+            } } );
 
         var try_reconnect = function() {
             that.hippie.init();

@@ -40,8 +40,7 @@ function doPost(el1, el) {
 
 $(function(){
     var timer_update;
-    hpipe = new Hippie.Pipe();
-    hpipe.arg = "<?= $room ?>";
+    hpipe = new Hippie.Pipe( {arg: "<?= $room ?>"} );
 
     var status = $('#connection-status');
     jQuery(hpipe)

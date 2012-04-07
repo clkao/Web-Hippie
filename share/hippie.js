@@ -1,20 +1,37 @@
-var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
+var Hippie = function(opt) {
+    // Back-compat
+    if (arguments.length > 1) {
+        opt = {
+            host:          arguments[0],
+            arg:           arguments[1],
+            on_connect:    arguments[2],
+            on_disconnect: arguments[3],
+            on_event:      arguments[4],
+            path:          arguments[5],
+        };
+    }
 
-    this.arg = arg ? arg : '';
-    this.on_disconnect = on_disconnect;
-    this.on_connect = on_connect;
-    this.on_event = on_event;
-    this.path = path ? path : '';
+    if (!opt) opt = {};
+
+    this.on_disconnect = opt.on_disconnect ? opt.on_disconnect : function() {};
+    this.on_connect    = opt.on_connect    ? opt.on_connect    : function() {};
+    this.on_event      = opt.on_event      ? opt.on_event      : function() {};
+
+    this.host      = opt.host ? opt.host : document.location.host;
+    this.path      = opt.path ? opt.path : '';
+
+    this.client_id = opt.client_id ? opt.client_id : '';
+    this.arg       = opt.arg       ? opt.arg       : '';
+
     this.detect();
 
-    if (!host.match('://')) {// protcol not provided
-        host = document.location.protocol.replace(/http/, 'ws') + '//' + host;
-    }
 
     var that = this;
     if (this.mode == 'ws') {
         this.init = function() {
-            ws = new WebSocket(host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
+            if (!that.host.match('://'))
+                that.host = document.location.protocol.replace(/http/, 'ws') + '//' + that.host;
+            ws = new WebSocket(that.host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
             ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
                 if (d.type == "hippie.pipe.set_client_id") {
