@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Twiggy/Plack WebSocket Chat demo</title>
+<title>Hippie Chat demo</title>
 <script src="/static/jquery-1.3.2.min.js"></script>
 <script src="/static/jquery.ev.js"></script>
 <script src="/static/jquery.md5.js"></script>
@@ -71,7 +71,7 @@ room name to enter: <input id="chat" type="text" size="48"/>
 <table id="messages">
 </table>
 
-<div id="footer">Powered by <a href="http://github.com/miyagawa/Twiggy">Twiggy/<?= $Twiggy::VERSION ?></a>.</div>
+<div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie/<?= $Web::Hippie::VERSION ?></a>.</div>
 
 </div>
 </body>
