@@ -6,12 +6,8 @@
 <script src="/static/jquery.cookie.js"></script>
 <script src="/static/pretty.js"></script>
 <script>
-var ws;
-var cookieName = 'tatsumaki_chat_ident';
-
-function doPost(el1, el) {
-  var text = el.attr('value');
-  location.href = 'http://' + location.host + '/chat/' + text;
+function doPost(el) {
+  location.href = 'http://' + location.host + '/chat/' + el.attr('value');
   return;
 }
 </script>
@@ -23,7 +19,7 @@ function doPost(el1, el) {
 <div id="content">
 
 <h1 class="chat-room-name">Enter room name:</h1>
-<form onsubmit="doPost($('#ident'), $('#chat')); return false">
+<form onsubmit="doPost($('#chat')); return false">
 room name to enter: <input id="chat" type="text" size="48"/>
 </form>
 
