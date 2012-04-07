@@ -40,8 +40,7 @@ function doPost(el1, el) {
 
 $(function(){
     var timer_update;
-    hpipe = new Hippie.Pipe();
-    hpipe.arg = "<?= $room ?>";
+    hpipe = new Hippie.Pipe( {arg: "<?= $room ?>"} );
 
     var status = $('#connection-status');
     jQuery(hpipe)
@@ -90,7 +89,7 @@ $(function(){
                 );
                 $('.pretty-time', meta).prettyDate();
                 $('#messages').prepend($('<tr/>').addClass('message').append(avatar).append(message).append(meta));
-                
+
             } catch(e) { if (console) console.log(e) }
         });
     hpipe.init();
@@ -101,53 +100,9 @@ $(function(){
 });
 </script>
 <link rel="stylesheet" href="/static/screen.css" />
-<style>
-#messages {
-  margin-top: 1em;
-  margin-right: 3em;
-  width: 100%;
-}
-.avatar {
-  width: 25px;
-  vertical-align: top;
-}
-.avatar img {
-  width: 25px; height: 25px;
-  vertical-align: top;
-  margin-right: 0.5em;
-}
-.chat-message {
-  width: 70%;
-}
-.chat-message .name {
-  font-weight: bold;
-}
-.meta {
-  vertical-align: top;
-  color: #888;
-  font-size: 0.8em;
-}
-body {
-  margin: 1em 2em
-}
-
-#connection-status {
-  position: absolute;
-  top: 0px;
-  right:0px;
-  background-color: red;
-}
-
-#connection-status.connected {
-  background-color: #00ff00;
-  display: none;
-}
-
-</style>
+<link rel="stylesheet" href="/static/chat.css" />
 </head>
 <body>
-
-<div id="content">
 
 <h1 class="chat-room-name">Chat room: <?= $room ?></h1>
 <!-- move this input out of form so Firefox can submit with enter key :/ -->
@@ -165,6 +120,5 @@ Connecting...
 
 <div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie/<?= $Web::Hippie::VERSION ?></a>.</div>
 
-</div>
 </body>
 </html>

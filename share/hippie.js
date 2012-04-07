@@ -1,68 +1,71 @@
-var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
+var Hippie = function(opt) {
+    // Back-compat
+    if (arguments.length > 1) {
+        opt = {
+            host:          arguments[0],
+            arg:           arguments[1],
+            on_connect:    arguments[2],
+            on_disconnect: arguments[3],
+            on_event:      arguments[4],
+            path:          arguments[5],
+        };
+    }
 
-    this.arg = arg ? arg : '';
-    this.on_disconnect = on_disconnect;
-    this.on_connect = on_connect;
-    this.on_event = on_event;
-    this.path = path ? path : '';
+    if (!opt) opt = {};
+
+    this.on_disconnect = opt.on_disconnect ? opt.on_disconnect : function() {};
+    this.on_connect    = opt.on_connect    ? opt.on_connect    : function() {};
+    this.on_event      = opt.on_event      ? opt.on_event      : function() {};
+
+    this.host      = opt.host ? opt.host : document.location.host;
+    this.path      = opt.path ? opt.path : '';
+
+    this.arg       = opt.arg    ? opt.arg    : '';
+    this.params    = opt.params ? opt.params : '';
+
     this.detect();
 
-    if (!host.match('://')) {// protcol not provided
-        host = document.location.protocol.replace(/http/, 'ws') + '//' + host;
-    }
 
     var that = this;
     if (this.mode == 'ws') {
         this.init = function() {
-            ws = new WebSocket(host+that.path+"/_hippie/ws/"+that.arg + '?client_id=' + (that.client_id || ''));
-            ws.onmessage = function(ev) {
+            if (!that.host.match('://'))
+                that.host = document.location.protocol.replace(/http/, 'ws') + '//' + that.host;
+            that.ws = new WebSocket(that.host+that.path+"/_hippie/ws/"+that.arg + that.params);
+            that.ws.onmessage = function(ev) {
                 var d = eval("("+ev.data+")");
-                if (d.type == "hippie.pipe.set_client_id") {
-                    that.client_id = d.client_id;
-                }
                 that.on_event(d);
             }
-            ws.onclose = ws.onerror = function(ev) {
+            that.ws.onclose = that.ws.onerror = function(ev) {
                 that.on_disconnect();
             }
-            ws.onopen = function() {
+            that.ws.onopen = function() {
                 that.on_connect();
             }
-            that.ws = ws;
         };
     }
     else if (this.mode == 'mxhr') {
         this.init = function() {
-            var s = new DUI.Stream();
+            that.mxhr = new DUI.Stream();
             // XXX: somehow s.listeners are shared between objects.
             // maybe a DUI class issue?  this workarounds issue where
             // reconnect introduces duplicated listeners.
-            s.listeners = {};
-            s.listen('application/json', function(payload) {
-                var event = eval('(' + payload + ')');
-                if (event.type == "hippie.pipe.set_client_id") {
-                    that.client_id = event.client_id;
-                }
-                that.on_event(event);
+            that.mxhr.listeners = {};
+            that.mxhr.listen('application/json', function(payload) {
+                var d = eval('(' + payload + ')');
+                that.on_event(d);
             });
-            s.listen('complete', function() {
+            that.mxhr.listen('complete', function() {
                 that.on_disconnect();
             });
-            s.load(that.path + "/_hippie/mxhr/" + that.arg + '?client_id=' + (that.client_id || ''));
+            that.mxhr.load(that.path + "/_hippie/mxhr/" + that.arg + that.params);
             that.on_connect();
-            that.mxhr = s;
         };
     }
     else if (this.mode == 'poll') {
         this.init = function() {
-            $.ev.loop(that.path + '/_hippie/poll/' + that.arg,
-                      { '*': that.on_event,
-                        'hippie.pipe.set_client_id': function(e) {
-                            that.client_id = e.client_id;
-                            $.ev.url = that.path + '/_hippie/poll/' + that.arg + '?client_id=' + e.client_id;
-                            that.on_event(e);
-                        }
-                      }
+            $.ev.loop(that.path + '/_hippie/poll/' + that.arg + that.params,
+                      { '*': that.on_event }
                      );
             that.on_connect();
         }
@@ -75,6 +78,12 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
 };
 
 Hippie.prototype = {
+    set_params: function(params) {
+        this.params = params;
+        if (this.mode == 'poll') {
+            $.ev.url = this.path + '/_hippie/poll/' + this.arg + this.params;
+        }
+    },
     detect: function() {
         var match = /hippie\.mode=(\w+)/.exec(document.location.search);
         if (match) {
@@ -111,11 +120,7 @@ Hippie.prototype = {
         else {
             var that = this;
             jQuery.ajax({
-                url: this.path + "/_hippie/pub/"+this.arg,
-                beforeSend: function(xhr, s) {
-		    xhr.setRequestHeader("X-Hippie-ClientId", that.client_id);
-                    return true;
-                },
+                url: this.path + "/_hippie/pub/"+this.arg+this.params,
                 data: { message: JSON.stringify(msg) },
                 type: 'post',
                 dataType: 'json',
