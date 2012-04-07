@@ -16,18 +16,12 @@ function doPost(el) {
 </head>
 <body>
 
-<div id="content">
-
 <h1 class="chat-room-name">Enter room name:</h1>
 <form onsubmit="doPost($('#chat')); return false">
 room name to enter: <input id="chat" type="text" size="48"/>
 </form>
 
-<table id="messages">
-</table>
-
 <div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie/<?= $Web::Hippie::VERSION ?></a>.</div>
 
-</div>
 </body>
 </html>

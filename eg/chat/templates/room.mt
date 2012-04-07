@@ -89,7 +89,7 @@ $(function(){
                 );
                 $('.pretty-time', meta).prettyDate();
                 $('#messages').prepend($('<tr/>').addClass('message').append(avatar).append(message).append(meta));
-                
+
             } catch(e) { if (console) console.log(e) }
         });
     hpipe.init();
@@ -103,8 +103,6 @@ $(function(){
 <link rel="stylesheet" href="/static/chat.css" />
 </head>
 <body>
-
-<div id="content">
 
 <h1 class="chat-room-name">Chat room: <?= $room ?></h1>
 <!-- move this input out of form so Firefox can submit with enter key :/ -->
@@ -122,6 +120,5 @@ Connecting...
 
 <div id="footer">Powered by <a href="http://github.com/clkao/Web-Hippie">Hippie/<?= $Web::Hippie::VERSION ?></a>.</div>
 
-</div>
 </body>
 </html>
