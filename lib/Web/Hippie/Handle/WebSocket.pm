@@ -5,7 +5,6 @@ BEGIN {
     eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
 }
 
-has id => (is => "ro");
 has h => (is => "ro", isa => "AnyEvent::Handle");
 has version => (is => "rw", isa => "Str");
 
