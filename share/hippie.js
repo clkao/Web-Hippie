@@ -8,7 +8,7 @@ var Hippie = function(host, arg, on_connect, on_disconnect, on_event, path) {
     this.detect();
 
     if (!host.match('://')) {// protcol not provided
-        host = document.location.protocol.replace(/http/, 'ws') + '//' + host;
+        host = document.location.protocol.replace(/(file|https?)/, 'ws') + '//' + host;
     }
 
     var that = this;
