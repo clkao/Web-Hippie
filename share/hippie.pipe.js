@@ -19,6 +19,7 @@ Hippie.Pipe.prototype = {
                                       self.trigger("disconnected");
                                   },
                                   function(e) {
+                                      self.trigger("event", e);
                                       if (e.type == "hippie.pipe.set_client_id") {
                                           self.trigger("ready", e.client_id);
                                       }
