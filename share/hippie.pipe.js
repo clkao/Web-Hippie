@@ -35,6 +35,7 @@ Hippie.Pipe.prototype = {
             },
             on_disconnect: function() { self.trigger("disconnected"); },
             on_event:      function(e) {
+                self.trigger("event", e);
                 if (e.type == "hippie.pipe.set_client_id") {
                     that.opt.client_id = e.client_id;
                     that.hippie.set_params('?client_id='+e.client_id);
