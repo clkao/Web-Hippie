@@ -12,7 +12,8 @@ Hippie.Pipe.prototype = {
         this.reconnect_time = this.initial_reconnect;
         this.hippie = new Hippie( opt.host, this.args,
                                   function() {
-                                      self.trigger("connected");
+				      self.trigger("connected");
+				      that.flushQueue();
                                   },
                                   function() {
                                       self.trigger("disconnected");
@@ -32,7 +33,10 @@ Hippie.Pipe.prototype = {
             that.reconnect_time *= 2;
         };
 
-        self.bind("ready", function() { that.reconnect_time = that.initial_reconnect });
+        self.bind("ready", function() {
+	    that.reconnect_time = that.initial_reconnect;
+	    that.flushQueue();
+	});
         self.bind("disconnected", function() {
             that.reconnect_timeout = window.setTimeout(try_reconnect, that.reconnect_time * 1000);
             self.trigger("reconnecting", { after: that.reconnect_time,
@@ -41,6 +45,16 @@ Hippie.Pipe.prototype = {
 
     },
     send: function(msg) {
-        this.hippie.send(msg);
+	if (! this.sendQ) this.sendQ = [];
+	this.sendQ.push(msg);
+	this.flushQueue();
+    },
+    flushQueue: function () {
+	if (! this.sendQ) return;
+	if (! this.hippie) return;
+	for (var i = 0; i < this.sendQ.length; i++) {
+            this.hippie.send(this.sendQ[i]);
+	}
+	this.sendQ = [];
     }
 };
