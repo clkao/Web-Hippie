@@ -35,7 +35,7 @@ Hippie.Pipe.prototype = {
             },
             on_disconnect: function() { self.trigger("disconnected"); },
             on_event:      function(e) {
-                self.trigger("event", e);
+                self.trigger("message.*", e);
                 if (e.type == "hippie.pipe.set_client_id") {
                     that.opt.client_id = e.client_id;
                     that.hippie.set_params('?client_id='+e.client_id);
@@ -69,9 +69,14 @@ Hippie.Pipe.prototype = {
         this.flushQueue();
     },
     flushQueue: function () {
-        if (! this.sendQ) return;
-        if (! this.hippie) return;
-        for (var i = 0; i < this.sendQ.length; i++) {
+    	var self = this;
+    	if (! this.sendQ) return;
+    	if (! this.hippie) {
+                // try again soon
+    	    window.setTimeout(function () { self.flushQueue() }, 1000);
+    	    return;
+    	}
+    	for (var i = 0; i < this.sendQ.length; i++) {
             this.hippie.send(this.sendQ[i]);
         }
         this.sendQ = [];
