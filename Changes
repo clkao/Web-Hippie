@@ -1,5 +1,7 @@
 Revision history for Perl extension Web::Hippie
 
+0.40 Thu Feb 23 21:33:52 CST 2012
+        - fix draft-ietf-hybi-17 handshake hanging on win32.
 
 0.39 Sun Aug 28 20:25:56 CST 2011
         - get request origin from protocol::websocket.
