@@ -6,7 +6,7 @@ our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
 use HTTP::Date;
-use Plack::Util::Accessor qw( bus client_mgr );
+use Plack::Util::Accessor qw( bus client_mgr allow_clientless_publish );
 use Plack::Request;
 use Plack::Response;
 use AnyMQ;
@@ -70,6 +70,12 @@ sub call {
                            $queue->append(@msg);
                        });
         $sub->poll(sub { $h->send_msg($_) for @_ });
+    }
+    elsif ($env->{PATH_INFO} eq '/message') {
+        # listener is not required to publish events?
+	$self->get_listener($env) unless $self->allow_clientless_publish;
+
+        return $self->app->($env);
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;
