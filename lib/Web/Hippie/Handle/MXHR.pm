@@ -3,7 +3,6 @@ BEGIN {
     eval "use Class::XSAccessor::Compat 'antlers'; 1" or
     eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
 }
-has id => (is => "ro");
 has boundary => (is => "ro");
 has writer => (is => "ro");
 

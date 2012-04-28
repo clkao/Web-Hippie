@@ -61,7 +61,6 @@ sub handler_pub {
 sub handler_mxhr {
     my ($self, $env, $handler) = @_;
     my $req = Plack::Request->new($env);
-    my $client_id = $req->param('client_id') || rand(1);
 
     my $size = 2;
     use MIME::Base64;
@@ -92,8 +91,7 @@ sub handler_mxhr {
              ]]);
         $writer->write("--" . $boundary. "\n");
         $env->{'hippie.handle'} = Web::Hippie::Handle::MXHR->new
-            ({ id       => $client_id,
-               boundary => $boundary,
+            ({ boundary => $boundary,
                writer   => $writer });
         $env->{'PATH_INFO'} = '/init';
 
@@ -112,7 +110,6 @@ sub handler_ws {
     my $res = $req->new_response(200);
 
     my $hs = Protocol::WebSocket::Handshake::Server->new_from_psgi($env);
-    my $client_id = $req->param('client_id') || rand(1);
 
     my $fh = $env->{'psgix.io'}
         or return [ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ];
@@ -159,8 +156,7 @@ sub handler_ws {
                         );
                     });
         $env->{'hippie.handle'} = Web::Hippie::Handle::WebSocket->new
-            ({ id => $client_id,
-               version => $version,
+            ({ version => $version,
                h  => $h });
         $h->on_error( $self->connection_cleanup($env, $handler, $h) );
 

@@ -1,33 +1,45 @@
-Hippie.Pipe = function() {
+Hippie.Pipe = function(opt) {
+    if (!opt) opt = {}
+
+    this.opt = opt;
 };
 
 Hippie.Pipe.prototype = {
     initial_reconnect: 5,
-    init: function(opt) {
+    init: function() {
+        // back-compat
+        if (arguments.length)
+            this.opt = arguments[0];
+
         var self = jQuery(this);
         var that = this;
-        if (!opt) opt = {}
-        if (!opt.host)
-            opt.host = document.location.host;
-        this.reconnect_time = this.initial_reconnect;
-        this.hippie = new Hippie( opt.host, this.args,
-                                  function() {
-				      self.trigger("connected");
-				      that.flushQueue();
-                                  },
-                                  function() {
-                                      self.trigger("disconnected");
-                                  },
-                                  function(e) {
-                                      self.trigger("message.*", e);
-                                      if (e.type == "hippie.pipe.set_client_id") {
-                                          self.trigger("ready", e.client_id);
-                                      }
-                                      else {
-                                          self.trigger("message."+e.type, e);
-                                      }
-                                  });
+        var params = ''
+        if (this.opt.client_id) {
+            params = '?client_id='+this.opt.client_id;
+        }
 
+        this.reconnect_time = this.initial_reconnect;
+        this.hippie = new Hippie( {
+            host:      this.opt.host,
+            path:      this.opt.path,
+            arg:       this.opt.arg,
+            params:    params,
+            on_connect:    function() {
+                self.trigger("connected");
+                that.flushQueue();
+            },
+            on_disconnect: function() { self.trigger("disconnected"); },
+            on_event:      function(e) {
+                if (e.type == "hippie.pipe.set_client_id") {
+                    that.opt.client_id = e.client_id;
+                    that.hippie.set_params('?client_id='+e.client_id);
+                    self.trigger("ready", e.client_id);
+                }
+                else {
+                    self.trigger("message."+e.type, e);
+                    self.trigger("message.*", e);
+                }
+            } } );
 
         var try_reconnect = function() {
             that.hippie.init();
@@ -37,7 +49,7 @@ Hippie.Pipe.prototype = {
         self.bind("ready", function() {
 	    that.reconnect_time = that.initial_reconnect;
 	    that.flushQueue();
-	});
+    	});
         self.bind("disconnected", function() {
             that.reconnect_timeout = window.setTimeout(try_reconnect, that.reconnect_time * 1000);
             self.trigger("reconnecting", { after: that.reconnect_time,
