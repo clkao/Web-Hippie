@@ -62,17 +62,14 @@ sub call {
 
         $sub->on_error(sub {
                            my ($queue, $error, @msg) = @_;
-                           $queue->persistent(0);
+                           $queue->unpoll;
                            $queue->append(@msg);
                        });
         $sub->poll(sub { $h->send_msg($_) for @_ });
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;
-        # XXX: AnyMQ should provide unpoll method.
-        $sub->cv->cb(undef);
-        $sub->persistent(0);
-        $sub->{timer} = $sub->_reaper;
+        $sub->unpoll;
     }
     else {
         $self->get_listener($env);
