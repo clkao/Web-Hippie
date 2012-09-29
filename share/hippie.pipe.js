@@ -13,6 +13,7 @@ Hippie.Pipe.prototype = {
 
         var self = jQuery(this);
         var that = this;
+
         var params = ''
         if (this.opt.client_id) {
             params = '?client_id='+this.opt.client_id;
@@ -24,10 +25,7 @@ Hippie.Pipe.prototype = {
             path:      this.opt.path,
             arg:       this.opt.arg,
             params:    params,
-            on_connect:    function() {
-                self.trigger("connected");
-                that.flushQueue();
-            },
+            on_connect:    function() { self.trigger("connected"); },
             on_disconnect: function() { self.trigger("disconnected"); },
             on_event:      function(e) {
                 if (e.type == "hippie.pipe.set_client_id") {
@@ -37,7 +35,6 @@ Hippie.Pipe.prototype = {
                 }
                 else {
                     self.trigger("message."+e.type, e);
-                    self.trigger("message.*", e);
                 }
             } } );
 
@@ -46,10 +43,7 @@ Hippie.Pipe.prototype = {
             that.reconnect_time *= 2;
         };
 
-        self.bind("ready", function() {
-	    that.reconnect_time = that.initial_reconnect;
-	    that.flushQueue();
-    	});
+        self.bind("ready", function() { that.reconnect_time = that.initial_reconnect });
         self.bind("disconnected", function() {
             that.reconnect_timeout = window.setTimeout(try_reconnect, that.reconnect_time * 1000);
             self.trigger("reconnecting", { after: that.reconnect_time,
@@ -58,21 +52,6 @@ Hippie.Pipe.prototype = {
 
     },
     send: function(msg) {
-	if (! this.sendQ) this.sendQ = [];
-	this.sendQ.push(msg);
-	this.flushQueue();
-    },
-    flushQueue: function () {
-	var self = this;
-	if (! this.sendQ) return;
-	if (! this.hippie) {
-            // try again soon
-	    window.setTimeout(function () { self.flushQueue() }, 1000);
-	    return;
-	}
-	for (var i = 0; i < this.sendQ.length; i++) {
-            this.hippie.send(this.sendQ[i]);
-	}
-	this.sendQ = [];
+        this.hippie.send(msg);
     }
 };
