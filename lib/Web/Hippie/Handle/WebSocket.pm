@@ -1,5 +1,9 @@
 package Web::Hippie::Handle::WebSocket;
+
 use strict;
+use warnings;
+use Web::Hippie;
+
 BEGIN {
     eval "use Class::XSAccessor::Compat 'antlers'; 1" or
     eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
@@ -21,7 +25,7 @@ sub send_msg {
     my ($self, $msg) = @_;
 
     my $bytes = Protocol::WebSocket::Frame->new
-        ( buffer => JSON::encode_json($msg),
+        ( buffer => Web::Hippie->encode_message($msg),
           version => $self->version)->to_bytes;
     $self->h->push_write($bytes);
 }

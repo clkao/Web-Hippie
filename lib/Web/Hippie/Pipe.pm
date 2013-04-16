@@ -1,6 +1,7 @@
 package Web::Hippie::Pipe;
 
 use strict;
+use warnings;
 use 5.008_001;
 our $VERSION = '0.01';
 use parent 'Plack::Middleware';
@@ -10,6 +11,7 @@ use Plack::Util::Accessor qw( bus client_mgr allow_clientless_publish );
 use Plack::Request;
 use Plack::Response;
 use AnyMQ;
+use Web::Hippie;
 
 sub prepare_app {
     my $self = shift;
@@ -50,7 +52,7 @@ sub call {
                     'Expires' => HTTP::Date::time2str(0),
                     'Last-Modified' => HTTP::Date::time2str(time())
                 ]]);
-            $sub->poll_once(sub { $writer->write(JSON::encode_json(\@_));
+            $sub->poll_once(sub { $writer->write(Web::Hippie->encode_message(\@_));
                                   $writer->close });
         }
     }

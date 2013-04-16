@@ -39,16 +39,12 @@ sub handler_pub {
     my $req = Plack::Request->new($env);
 
     # get message
-    my $message_raw = $req->parameters->mixed->{'message'};
-    unless ($message_raw) {
-        return [400, ['Content-Type' => 'text/plain'], ['empty request']];
-    }
+    my $message = $req->parameters->mixed->{'message'};
 
-    # parse JSON
-    my $message = eval { JSON::from_json($message_raw, { utf8 => 1 }) };
-    unless ($message) {
-        $env->{'psgi.errors'}->print("Failed to parse JSON '$message_raw': $@\n");
-        return [400, ['Content-Type' => 'text/plain'], ['invalid JSON in request']];
+    # try to parse JSON
+    if ($message) {
+        my $decoded = eval { JSON::from_json($message, { utf8 => 1 }) };
+        $message = $decoded if $decoded;
     }
 
     # forward to message publish handler
@@ -176,6 +172,20 @@ sub connection_cleanup {
     };
 }
 
+# try to encode a message as JSON
+# returns original string if failure
+sub encode_message {
+    my ($class, $msg) = @_;
+
+    return $msg unless $msg && ref $msg;
+    my $encoded = eval {
+        JSON::encode_json($msg);
+    };
+    return $encoded if $encoded;
+
+    warn "Failed to encode '$msg' as JSON: $@";
+    return $msg;
+}
 
 1;
 __END__

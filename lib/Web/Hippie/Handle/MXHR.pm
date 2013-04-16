@@ -1,4 +1,9 @@
 package Web::Hippie::Handle::MXHR;
+
+use strict;
+use warnings;
+use Web::Hippie;
+
 BEGIN {
     eval "use Class::XSAccessor::Compat 'antlers'; 1" or
     eval "use Class::Accessor::Fast 'antlers'; 1" or die $@;
@@ -18,7 +23,7 @@ sub new {
 sub send_msg {
     my ($self, $msg) = @_;
 
-    my $json = JSON::encode_json($msg);
+    my $json = Web::Hippie->encode_message($msg);
     $self->writer->write( "Content-Type: application/json\n\n$json\n--" . $self->boundary. "\n" );
 }
 
