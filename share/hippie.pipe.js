@@ -42,7 +42,6 @@ Hippie.Pipe.prototype = {
                     self.trigger("ready", e.client_id);
                 }
                 else {
-                    self.trigger("message.*", e);
                     self.trigger("message."+e.type, e);
                 }
             } } );
