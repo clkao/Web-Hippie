@@ -33,7 +33,12 @@ var Hippie = function(opt) {
                 that.host = document.location.protocol.replace(/http/, 'ws') + '//' + that.host;
             that.ws = new WebSocket(that.host+that.path+"/_hippie/ws/"+that.arg + that.params);
             that.ws.onmessage = function(ev) {
-                var d = eval("("+ev.data+")");
+                var d;
+                try {
+                    d = eval("("+ev.data+")");
+                } catch(ex) {
+                    d = ev.data;
+                };
                 that.on_event(d);
             }
             that.ws.onclose = that.ws.onerror = function(ev) {
