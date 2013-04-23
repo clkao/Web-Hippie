@@ -1,15 +1,17 @@
 package Web::Hippie::Pipe;
 
 use strict;
+use warnings;
 use 5.008_001;
 our $VERSION = '0.01';
 use parent 'Plack::Middleware';
 
 use HTTP::Date;
-use Plack::Util::Accessor qw( bus client_mgr );
+use Plack::Util::Accessor qw( bus client_mgr allow_clientless_publish );
 use Plack::Request;
 use Plack::Response;
 use AnyMQ;
+use Web::Hippie;
 
 sub prepare_app {
     my $self = shift;
@@ -50,7 +52,7 @@ sub call {
                     'Expires' => HTTP::Date::time2str(0),
                     'Last-Modified' => HTTP::Date::time2str(time())
                 ]]);
-            $sub->poll_once(sub { $writer->write(JSON::encode_json(\@_));
+            $sub->poll_once(sub { $writer->write(Web::Hippie->encode_message(\@_));
                                   $writer->close });
         }
     }
@@ -70,6 +72,12 @@ sub call {
                            $queue->append(@msg);
                        });
         $sub->poll(sub { $h->send_msg($_) for @_ });
+    }
+    elsif ($env->{PATH_INFO} eq '/message') {
+        # listener is not required to publish events?
+	$self->get_listener($env) unless $self->allow_clientless_publish;
+
+        return $self->app->($env);
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;

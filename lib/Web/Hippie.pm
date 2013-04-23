@@ -35,9 +35,20 @@ use Encode;
 
 sub handler_pub {
     my ($self, $env, $handler) = @_;
+    
     my $req = Plack::Request->new($env);
-    $env->{'hippie.message'} =
-        JSON::from_json($req->parameters->mixed->{'message'}, { utf8 => 1 });
+
+    # get message
+    my $message = $req->parameters->mixed->{'message'};
+
+    # try to parse JSON
+    if ($message) {
+        my $decoded = eval { JSON::from_json($message, { utf8 => 1 }) };
+        $message = $decoded if $decoded;
+    }
+
+    # forward to message publish handler
+    $env->{'hippie.message'} = $message;
     $env->{'PATH_INFO'} = '/message';
 
     $handler->($env);
@@ -161,6 +172,20 @@ sub connection_cleanup {
     };
 }
 
+# try to encode a message as JSON
+# returns original string if failure
+sub encode_message {
+    my ($class, $msg) = @_;
+
+    return $msg unless $msg && ref $msg;
+    my $encoded = eval {
+        JSON::encode_json($msg);
+    };
+    return $encoded if $encoded;
+
+    warn "Failed to encode '$msg' as JSON: $@";
+    return $msg;
+}
 
 1;
 __END__
