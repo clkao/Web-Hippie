@@ -61,14 +61,10 @@ sub call {
             or return [ '400', [ 'Content-Type' => 'text/plain' ], [ "" ] ];
 
         my $sub = $self->get_listener($env);
-        if ($env->{'hippie.handle'} &&
-            $env->{'hippie.handle'}->isa('Web::Hippie::Handle::WebSocket')) {
-            $sub->timeout(15);
-        }
 
         $sub->on_error(sub {
                            my ($queue, $error, @msg) = @_;
-                           $queue->persistent(0);
+                           $queue->unpoll;
                            $queue->append(@msg);
                        });
         $sub->poll(sub { $h->send_msg($_) for @_ });
@@ -81,10 +77,7 @@ sub call {
     }
     elsif ($env->{PATH_INFO} eq '/error') {
         my $sub = $env->{'hippie.listener'} or die;
-        # XXX: AnyMQ should provide unpoll method.
-        $sub->cv->cb(undef);
-        $sub->persistent(0);
-        $sub->{timer} = $sub->_reaper;
+        $sub->unpoll;
     }
     else {
         $self->get_listener($env);
@@ -100,6 +93,9 @@ sub get_listener {
     my $new = !$sub || $sub->destroyed;
     if ($new) {
         $sub = $self->client_mgr->{$client_id} = $self->bus->new_listener();
+        $sub->timeout(15)
+            if $env->{'hippie.handle'} and
+                $env->{'hippie.handle'}->isa('Web::Hippie::Handle::WebSocket');
         $sub->on_timeout(sub { $_[0]->destroyed(1);
                                $env->{PATH_INFO} = '/error';
                                $self->app->($env);
