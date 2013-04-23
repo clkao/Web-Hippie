@@ -33,13 +33,7 @@ var Hippie = function(opt) {
                 that.host = document.location.protocol.replace(/http/, 'ws') + '//' + that.host;
             that.ws = new WebSocket(that.host+that.path+"/_hippie/ws/"+that.arg + that.params);
             that.ws.onmessage = function(ev) {
-                var d;
-                try {
-                    d = eval("("+ev.data+")");
-                } catch(ex) {
-                    d = ev.data;
-                };
-                that.on_event(d);
+                that.data_received(ev);
             }
             that.ws.onclose = that.ws.onerror = function(ev) {
                 that.on_disconnect();
@@ -57,8 +51,7 @@ var Hippie = function(opt) {
             // reconnect introduces duplicated listeners.
             that.mxhr.listeners = {};
             that.mxhr.listen('application/json', function(payload) {
-                var d = eval('(' + payload + ')');
-                that.on_event(d);
+                that.data_received(payload);
             });
             that.mxhr.listen('complete', function() {
                 that.on_disconnect();
@@ -83,6 +76,15 @@ var Hippie = function(opt) {
 };
 
 Hippie.prototype = {
+    data_received: function(ev) {
+        var d;
+        try {
+            d = eval("("+ev.data+")");
+        } catch(ex) {
+            d = ev.data;
+        };
+        this.on_event(d);
+    },
     set_params: function(params) {
         this.params = params;
         if (this.mode == 'poll') {
