@@ -1,6 +1,7 @@
 package Web::Hippie;
 
 use strict;
+use warnings;
 use 5.008_001;
 our $VERSION = '0.40';
 use parent 'Plack::Middleware';
@@ -35,7 +36,7 @@ use Encode;
 
 sub handler_pub {
     my ($self, $env, $handler) = @_;
-    
+
     my $req = Plack::Request->new($env);
 
     # get message
@@ -60,7 +61,7 @@ sub handler_mxhr {
 
     my $size = 2;
     use MIME::Base64;
-    my $boundary = MIME::Base64::encode(join("", map chr(rand(256)), 1..$size*3), "");
+    my $boundary = MIME::Base64::encode(join("", map { chr rand(256) } 1..$size*3), "");
     $boundary =~ s/[\W]/X/g;  # ensure alnum only
 
     use Web::Hippie::Handle::MXHR;

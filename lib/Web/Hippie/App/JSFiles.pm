@@ -1,5 +1,6 @@
 package Web::Hippie::App::JSFiles;
 use strict;
+use warnings;
 use Try::Tiny;
 use File::ShareDir;
 
