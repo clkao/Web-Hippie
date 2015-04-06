@@ -61,7 +61,7 @@ sub handler_mxhr {
 
     my $size = 2;
     use MIME::Base64;
-    my $boundary = MIME::Base64::encode(join("", map chr(rand(256)), 1..$size*3), "");
+    my $boundary = MIME::Base64::encode(join("", map { chr rand(256) } 1..$size*3), "");
     $boundary =~ s/[\W]/X/g;  # ensure alnum only
 
     use Web::Hippie::Handle::MXHR;
