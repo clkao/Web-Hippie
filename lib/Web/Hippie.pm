@@ -1,6 +1,7 @@
 package Web::Hippie;
 
 use strict;
+use warnings;
 use 5.008_001;
 our $VERSION = '0.40';
 use parent 'Plack::Middleware';
@@ -35,7 +36,7 @@ use Encode;
 
 sub handler_pub {
     my ($self, $env, $handler) = @_;
-    
+
     my $req = Plack::Request->new($env);
 
     # get message
